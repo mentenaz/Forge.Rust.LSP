@@ -1,0 +1,74 @@
+name: build-release
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows-x86_64
+            suffix: .exe
+          - os: macos-latest
+            platform: macos-aarch64
+            suffix: ''
+          - os: ubuntu-latest
+            platform: linux-x86_64
+            suffix: ''
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build all language server packages
+        run: cargo build --release --workspace --exclude forge-registry-gen
+
+      - name: Package each language server per platform
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          for manifest in */forge-extension.toml; do
+            dir="$(dirname "$manifest")"
+            binary="$(sed -n 's/^binary *= *"\([^"]*\)"/\1/p' "$manifest" | head -n1)"
+            [ -n "$binary" ] || { echo "no binary in $manifest"; exit 1; }
+            cp "target/release/$binary${{ matrix.suffix }}" "dist/$binary${{ matrix.suffix }}"
+            zip -j "dist/$binary-${{ matrix.platform }}.zip" "dist/$binary${{ matrix.suffix }}"
+          done
+
+      - name: Generate forge-registry.json
+        run: cargo run --release -p forge-registry-gen
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: "${{ matrix.platform }}"
+          path: |
+            dist/*.zip
+            forge-registry.json
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.zip
+            dist/forge-registry.json
+          generate_release_notes: true

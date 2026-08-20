@@ -1,0 +1,13 @@
+[workspace]
+resolver = "2"
+members = [
+    "Json",
+    "tools/registry-gen",
+]
+
+[workspace.package]
+edition = "2021"
+
+[profile.release]
+lto = true
+strip = true

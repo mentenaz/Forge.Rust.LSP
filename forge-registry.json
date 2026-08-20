@@ -1,0 +1,40 @@
+{
+  "json": {
+    "name": "JSON",
+    "description": "JSON language support for Forge: parse-error diagnostics and value/key completion.",
+    "version": "0.1.0",
+    "repo": "mentenaz/Forge.Rust.LSP",
+    "language_id": "json",
+    "file_extensions": [
+      "json",
+      "jsonc"
+    ],
+    "args": [],
+    "assets": {
+      "linux-aarch64": {
+        "archive": "forge-lsp-json-linux-aarch64.zip",
+        "binary": "forge-lsp-json"
+      },
+      "linux-x86_64": {
+        "archive": "forge-lsp-json-linux-x86_64.zip",
+        "binary": "forge-lsp-json"
+      },
+      "macos-aarch64": {
+        "archive": "forge-lsp-json-macos-aarch64.zip",
+        "binary": "forge-lsp-json"
+      },
+      "macos-x86_64": {
+        "archive": "forge-lsp-json-macos-x86_64.zip",
+        "binary": "forge-lsp-json"
+      },
+      "windows-aarch64": {
+        "archive": "forge-lsp-json-windows-aarch64.zip",
+        "binary": "forge-lsp-json.exe"
+      },
+      "windows-x86_64": {
+        "archive": "forge-lsp-json-windows-x86_64.zip",
+        "binary": "forge-lsp-json.exe"
+      }
+    }
+  }
+}
