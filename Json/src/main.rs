@@ -65,6 +65,78 @@ fn completions_for(document: &str, line: usize, character: usize) -> Vec<Value> 
         .collect()
 }
 
+// ── Hover ───────────────────────────────────────────────────────────────────
+
+/// Describes whatever JSON token sits under `(line, character)`: a quoted
+/// string (key or value, inferred from what follows the closing quote) or a
+/// bare literal (`true`/`false`/`null`/a number). Text/line based, same
+/// heuristic style as `completions_for` above — no real JSON parser needed
+/// for this level of detail.
+fn hover_at(document: &str, line: usize, character: usize) -> Option<String> {
+    let lines: Vec<&str> = document.lines().collect();
+    let line_text = *lines.get(line)?;
+    let chars: Vec<char> = line_text.chars().collect();
+    let idx = character.min(chars.len());
+
+    if let Some((start, end)) = quoted_span_at(&chars, idx) {
+        let text: String = chars[start + 1..end].iter().collect();
+        let after: String = chars[end + 1..].iter().collect();
+        let kind = if after.trim_start().starts_with(':') { "key" } else { "string value" };
+        return Some(format!("\"{text}\" — {kind}"));
+    }
+
+    let (start, end) = word_span_at(&chars, idx)?;
+    let text: String = chars[start..end].iter().collect();
+    let kind = match text.as_str() {
+        "true" | "false" => "boolean value",
+        "null" => "null value",
+        _ if text.chars().next().is_some_and(|c| c.is_ascii_digit() || c == '-') => "number value",
+        _ => return None,
+    };
+    Some(format!("`{text}` — {kind}"))
+}
+
+/// If `idx` falls strictly inside an unescaped `"..."` pair on the line,
+/// returns the (start, end) char indices of the quotes.
+fn quoted_span_at(chars: &[char], idx: usize) -> Option<(usize, usize)> {
+    let mut in_string = false;
+    let mut start = 0;
+    for i in 0..chars.len() {
+        if chars[i] != '"' || (i > 0 && chars[i - 1] == '\\') {
+            continue;
+        }
+        if !in_string {
+            in_string = true;
+            start = i;
+        } else {
+            if idx > start && idx <= i {
+                return Some((start, i));
+            }
+            in_string = false;
+        }
+    }
+    None
+}
+
+/// Finds the contiguous run of "bare literal" characters (alphanumeric plus
+/// `-`/`.`/`+`, covering numbers and `true`/`false`/`null`) touching `idx`.
+fn word_span_at(chars: &[char], idx: usize) -> Option<(usize, usize)> {
+    let is_word = |c: char| c.is_ascii_alphanumeric() || c == '-' || c == '.' || c == '+';
+    let at = |i: usize| chars.get(i).copied().is_some_and(is_word);
+    if !at(idx) && !(idx > 0 && at(idx - 1)) {
+        return None;
+    }
+    let mut start = idx.min(chars.len().saturating_sub(1));
+    while start > 0 && is_word(chars[start - 1]) {
+        start -= 1;
+    }
+    let mut end = idx;
+    while end < chars.len() && is_word(chars[end]) {
+        end += 1;
+    }
+    if start == end { None } else { Some((start, end)) }
+}
+
 // ── Server loop ─────────────────────────────────────────────────────────────
 
 fn main() {
@@ -88,9 +160,10 @@ fn main() {
                     "result": {
                         "capabilities": {
                             "textDocumentSync": 1,
-                            "completionProvider": { "triggerCharacters": ["{", ",", ":"] }
+                            "completionProvider": { "triggerCharacters": ["{", ",", ":"] },
+                            "hoverProvider": true
                         },
-                        "serverInfo": { "name": "forge-lsp-json", "version": "0.1.0" }
+                        "serverInfo": { "name": "forge-lsp-json", "version": env!("CARGO_PKG_VERSION") }
                     }
                 });
                 write_message(&mut writer, &resp);
@@ -149,6 +222,27 @@ fn main() {
                 let doc = documents.get(uri).map(|s| s.as_str()).unwrap_or("");
                 let items = completions_for(doc, line, character);
                 let resp = json!({ "jsonrpc": "2.0", "id": id, "result": { "isIncomplete": false, "items": items } });
+                write_message(&mut writer, &resp);
+            }
+            "textDocument/hover" => {
+                let uri = msg
+                    .pointer("/params/textDocument/uri")
+                    .and_then(|u| u.as_str())
+                    .unwrap_or("");
+                let line = msg
+                    .pointer("/params/position/line")
+                    .and_then(|l| l.as_u64())
+                    .unwrap_or(0) as usize;
+                let character = msg
+                    .pointer("/params/position/character")
+                    .and_then(|c| c.as_u64())
+                    .unwrap_or(0) as usize;
+                let doc = documents.get(uri).map(|s| s.as_str()).unwrap_or("");
+                let result = match hover_at(doc, line, character) {
+                    Some(text) => json!({ "contents": { "kind": "plaintext", "value": text } }),
+                    None => Value::Null,
+                };
+                let resp = json!({ "jsonrpc": "2.0", "id": id, "result": result });
                 write_message(&mut writer, &resp);
             }
             _ => {

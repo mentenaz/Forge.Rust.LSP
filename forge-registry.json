@@ -1,8 +1,8 @@
 {
   "json": {
     "name": "JSON",
-    "description": "JSON language support for Forge: parse-error diagnostics and value/key completion.",
-    "version": "0.1.0",
+    "description": "JSON language support for Forge: parse-error diagnostics, value/key completion, and hover.",
+    "version": "0.2.0",
     "repo": "mentenaz/Forge.Rust.LSP",
     "language_id": "json",
     "file_extensions": [
