@@ -39,7 +39,11 @@ jobs:
             binary="$(sed -n 's/^binary *= *"\([^"]*\)"/\1/p' "$manifest" | head -n1)"
             [ -n "$binary" ] || { echo "no binary in $manifest"; exit 1; }
             cp "target/release/$binary${{ matrix.suffix }}" "dist/$binary${{ matrix.suffix }}"
-            zip -j "dist/$binary-${{ matrix.platform }}.zip" "dist/$binary${{ matrix.suffix }}"
+            if [ "$RUNNER_OS" = "Windows" ]; then
+              powershell -Command "Compress-Archive -Path 'dist/$binary${{ matrix.suffix }}' -DestinationPath 'dist/$binary-${{ matrix.platform }}.zip' -Force"
+            else
+              zip -j "dist/$binary-${{ matrix.platform }}.zip" "dist/$binary${{ matrix.suffix }}"
+            fi
           done
 
       - name: Generate forge-registry.json
