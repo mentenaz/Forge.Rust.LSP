@@ -1,0 +1,4 @@
+# Local-only archive of the original Zed extension sources (also published in
+# Mentenaz-Forge/zed-csharp). Kept out of the Forge LSP repo.
+
+zed/

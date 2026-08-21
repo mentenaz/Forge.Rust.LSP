@@ -1,0 +1,10 @@
+[package]
+name = "forge-lsp-csharp"
+version = "0.1.0"
+edition.workspace = true
+
+[[bin]]
+name = "forge-lsp-csharp"
+path = "src/main.rs"
+
+[dependencies]
