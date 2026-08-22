@@ -1,0 +1,14 @@
+id = "typescript"
+name = "TypeScript"
+description = "TypeScript/JavaScript language support for Forge: the native TypeScript 7 (tsgo) language server, downloaded as a pinned release — no Node.js required."
+version = "0.1.0"
+schema_version = 1
+authors = ["Mentenaz"]
+
+[language]
+language_id = "typescript"
+file_extensions = ["ts", "tsx", "js", "jsx", "mjs", "cjs", "mts", "cts"]
+
+[language_server]
+binary = "forge-lsp-typescript"
+args = []

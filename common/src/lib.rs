@@ -116,7 +116,13 @@ fn ensure_engine(spec: &EngineSpec) -> Result<ResolvedEngine, String> {
 
     let expected = exe_name(spec.binary_base);
     let lang_root = cache_root().join(spec.lang);
-    let dir = lang_root.join(if spec.tag.is_empty() { "latest" } else { spec.tag });
+    // Flatten tags containing '/' (e.g. "typescript/v7.0.2") so the cache
+    // stays one level deep — prune_old_versions relies on that layout.
+    let dir = lang_root.join(if spec.tag.is_empty() {
+        "latest".to_string()
+    } else {
+        spec.tag.replace('/', "_")
+    });
 
     if dir.join(".forge-ok").exists() {
         if let Some(exe) = find_binary(&dir, &expected) {

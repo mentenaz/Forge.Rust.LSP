@@ -204,6 +204,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "forge-lsp-typescript"
+version = "0.1.0"
+dependencies = [
+ "forge-lsp-proxy",
+]
+
+[[package]]
 name = "forge-lsp-zig"
 version = "0.1.0"
 dependencies = [

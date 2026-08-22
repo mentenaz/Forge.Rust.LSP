@@ -35,8 +35,11 @@ printf 'Content-Length: 75\r\n\r\n{"jsonrpc":"2.0","id":1,"method":"initialize",
 - Engine resolution chains:
   - C#: roslyn dotnet tool (auto-installs) → VS Code C# ext → omnisharp → csharp-ls.
   - Python: basedpyright/pyright/pylsp/jedi on PATH → npm install of basedpyright.
-  - Rust/Cpp/Lua/Toml/Markdown/Zig: engine on PATH wins → pinned GitHub release download
-    (`TAG` const + asset names must be bumped together; see each package's `main.rs`).
+  - Rust/Cpp/Lua/Toml/Markdown/Zig/TypeScript: engine on PATH wins → pinned GitHub release
+    download (`TAG` const + asset names must be bumped together; see each package's `main.rs`).
+    TypeScript wraps native TS7 (typescript-go) with NO PATH probe (npm `tsc` has no LSP mode);
+    its tag contains a slash (`typescript/v7.0.2`) — cache dirs flatten `/`→`_`, don't assume
+    `<lang>/<tag>` equals the raw tag.
 - `forge-extension.toml` accepts an optional `platforms = [...]` under `[language_server]`;
   omit it only if the upstream engine ships all six platforms (e.g. clangd has no ARM builds).
 - Release flow: push tag `v*` → `.github/workflows/build-release.yml` builds all six

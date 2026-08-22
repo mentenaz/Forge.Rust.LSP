@@ -332,6 +332,50 @@
       }
     }
   },
+  "typescript": {
+    "name": "TypeScript",
+    "description": "TypeScript/JavaScript language support for Forge: the native TypeScript 7 (tsgo) language server, downloaded as a pinned release — no Node.js required.",
+    "version": "0.1.0",
+    "repo": "mentenaz/Forge.Rust.LSP",
+    "language_id": "typescript",
+    "file_extensions": [
+      "ts",
+      "tsx",
+      "js",
+      "jsx",
+      "mjs",
+      "cjs",
+      "mts",
+      "cts"
+    ],
+    "args": [],
+    "assets": {
+      "linux-aarch64": {
+        "archive": "forge-lsp-typescript-linux-aarch64.zip",
+        "binary": "forge-lsp-typescript"
+      },
+      "linux-x86_64": {
+        "archive": "forge-lsp-typescript-linux-x86_64.zip",
+        "binary": "forge-lsp-typescript"
+      },
+      "macos-aarch64": {
+        "archive": "forge-lsp-typescript-macos-aarch64.zip",
+        "binary": "forge-lsp-typescript"
+      },
+      "macos-x86_64": {
+        "archive": "forge-lsp-typescript-macos-x86_64.zip",
+        "binary": "forge-lsp-typescript"
+      },
+      "windows-aarch64": {
+        "archive": "forge-lsp-typescript-windows-aarch64.zip",
+        "binary": "forge-lsp-typescript.exe"
+      },
+      "windows-x86_64": {
+        "archive": "forge-lsp-typescript-windows-x86_64.zip",
+        "binary": "forge-lsp-typescript.exe"
+      }
+    }
+  },
   "zig": {
     "name": "Zig",
     "description": "Zig language support for Forge: zls, preferring an install already on PATH, otherwise downloading a pinned release automatically. Requires a Zig toolchain on PATH for full features.",
