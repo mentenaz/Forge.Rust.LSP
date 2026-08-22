@@ -1,0 +1,11 @@
+[package]
+name = "forge-lsp-python"
+version = "0.1.0"
+edition.workspace = true
+
+[[bin]]
+name = "forge-lsp-python"
+path = "src/main.rs"
+
+[dependencies]
+forge-lsp-proxy = { path = "../common" }

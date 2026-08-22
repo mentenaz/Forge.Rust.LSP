@@ -55,9 +55,13 @@ cargo run --release -p forge-registry-gen   # regenerate forge-registry.json
 
 ## Smoke-test a server locally
 
+The request must be `Content-Length`-framed (a bare JSON line makes the server
+exit silently):
+
 ```sh
-echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"capabilities":{}}}' |
+printf 'Content-Length: 75\r\n\r\n{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"capabilities":{}}}' |
   target/release/forge-lsp-json
 ```
 
-Expect a `Content-Length`-framed capabilities response.
+Expect a `Content-Length`-framed capabilities response. Wrapper proxies need
+their engine present (or downloadable) — they print progress to stderr.

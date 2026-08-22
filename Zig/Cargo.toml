@@ -1,0 +1,11 @@
+[package]
+name = "forge-lsp-zig"
+version = "0.1.0"
+edition.workspace = true
+
+[[bin]]
+name = "forge-lsp-zig"
+path = "src/main.rs"
+
+[dependencies]
+forge-lsp-proxy = { path = "../common" }

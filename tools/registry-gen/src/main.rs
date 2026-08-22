@@ -47,6 +47,11 @@ struct PackageServer {
     binary: String,
     #[serde(default)]
     args: Vec<String>,
+    /// Platforms this package actually supports. Empty means all of
+    /// [`PLATFORMS`]. Packages whose upstream engine has no prebuilt for a
+    /// platform should omit it so the registry stays truthful.
+    #[serde(default)]
+    platforms: Vec<String>,
 }
 
 #[derive(Serialize)]
@@ -90,6 +95,11 @@ fn main() {
 
         let mut assets = BTreeMap::new();
         for platform in PLATFORMS {
+            if !pkg.language_server.platforms.is_empty()
+                && !pkg.language_server.platforms.iter().any(|p| p == platform)
+            {
+                continue;
+            }
             let exe_suffix = if platform.starts_with("windows-") { ".exe" } else { "" };
             assets.insert(
                 platform.to_string(),

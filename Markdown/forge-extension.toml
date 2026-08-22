@@ -1,0 +1,18 @@
+id = "markdown"
+name = "Markdown"
+description = "Markdown language support for Forge: marksman, preferring an install already on PATH, otherwise downloading a pinned release automatically."
+version = "0.1.0"
+schema_version = 1
+authors = ["Mentenaz"]
+
+[language]
+language_id = "markdown"
+file_extensions = ["md", "markdown"]
+
+[language_server]
+# Base binary name (no extension); the release pipeline appends the platform
+# suffix (`.exe` on Windows) when producing the artifact.
+binary = "forge-lsp-markdown"
+args = []
+# Upstream ships a universal macOS binary but no windows-aarch64 build.
+platforms = ["windows-x86_64", "macos-x86_64", "macos-aarch64", "linux-x86_64", "linux-aarch64"]

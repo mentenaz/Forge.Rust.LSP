@@ -1,0 +1,16 @@
+id = "python"
+name = "Python"
+description = "Python language support for Forge: basedpyright or pyright (auto-installed via npm), falling back to pylsp/jedi-language-server already on PATH."
+version = "0.1.0"
+schema_version = 1
+authors = ["Mentenaz"]
+
+[language]
+language_id = "python"
+file_extensions = ["py", "pyi", "pyw"]
+
+[language_server]
+# Base binary name (no extension); the release pipeline appends the platform
+# suffix (`.exe` on Windows) when producing the artifact.
+binary = "forge-lsp-python"
+args = []

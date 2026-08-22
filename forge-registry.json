@@ -1,4 +1,80 @@
 {
+  "cpp": {
+    "name": "C/C++",
+    "description": "C and C++ language support for Forge: clangd, preferring an install already on PATH, otherwise downloading a pinned clangd release automatically.",
+    "version": "0.1.0",
+    "repo": "mentenaz/Forge.Rust.LSP",
+    "language_id": "cpp",
+    "file_extensions": [
+      "c",
+      "cc",
+      "cpp",
+      "cxx",
+      "h",
+      "hh",
+      "hpp",
+      "hxx"
+    ],
+    "args": [],
+    "assets": {
+      "linux-x86_64": {
+        "archive": "forge-lsp-cpp-linux-x86_64.zip",
+        "binary": "forge-lsp-cpp"
+      },
+      "macos-aarch64": {
+        "archive": "forge-lsp-cpp-macos-aarch64.zip",
+        "binary": "forge-lsp-cpp"
+      },
+      "macos-x86_64": {
+        "archive": "forge-lsp-cpp-macos-x86_64.zip",
+        "binary": "forge-lsp-cpp"
+      },
+      "windows-x86_64": {
+        "archive": "forge-lsp-cpp-windows-x86_64.zip",
+        "binary": "forge-lsp-cpp.exe"
+      }
+    }
+  },
+  "csharp": {
+    "name": "C#",
+    "description": "C# language support for Forge: Microsoft's official Roslyn LSP (auto-installed via the dotnet tool), with Razor cohosting when the VS Code C# extension is present.",
+    "version": "0.1.0",
+    "repo": "mentenaz/Forge.Rust.LSP",
+    "language_id": "csharp",
+    "file_extensions": [
+      "cs",
+      "csx",
+      "cshtml",
+      "razor"
+    ],
+    "args": [],
+    "assets": {
+      "linux-aarch64": {
+        "archive": "forge-lsp-csharp-linux-aarch64.zip",
+        "binary": "forge-lsp-csharp"
+      },
+      "linux-x86_64": {
+        "archive": "forge-lsp-csharp-linux-x86_64.zip",
+        "binary": "forge-lsp-csharp"
+      },
+      "macos-aarch64": {
+        "archive": "forge-lsp-csharp-macos-aarch64.zip",
+        "binary": "forge-lsp-csharp"
+      },
+      "macos-x86_64": {
+        "archive": "forge-lsp-csharp-macos-x86_64.zip",
+        "binary": "forge-lsp-csharp"
+      },
+      "windows-aarch64": {
+        "archive": "forge-lsp-csharp-windows-aarch64.zip",
+        "binary": "forge-lsp-csharp.exe"
+      },
+      "windows-x86_64": {
+        "archive": "forge-lsp-csharp-windows-x86_64.zip",
+        "binary": "forge-lsp-csharp.exe"
+      }
+    }
+  },
   "json": {
     "name": "JSON",
     "description": "JSON language support for Forge: parse-error diagnostics, value/key completion, and hover.",
@@ -34,6 +110,262 @@
       "windows-x86_64": {
         "archive": "forge-lsp-json-windows-x86_64.zip",
         "binary": "forge-lsp-json.exe"
+      }
+    }
+  },
+  "lua": {
+    "name": "Lua",
+    "description": "Lua language support for Forge: the sumneko lua-language-server, preferring an install already on PATH, otherwise downloading a pinned release automatically.",
+    "version": "0.1.0",
+    "repo": "mentenaz/Forge.Rust.LSP",
+    "language_id": "lua",
+    "file_extensions": [
+      "lua"
+    ],
+    "args": [],
+    "assets": {
+      "linux-aarch64": {
+        "archive": "forge-lsp-lua-linux-aarch64.zip",
+        "binary": "forge-lsp-lua"
+      },
+      "linux-x86_64": {
+        "archive": "forge-lsp-lua-linux-x86_64.zip",
+        "binary": "forge-lsp-lua"
+      },
+      "macos-aarch64": {
+        "archive": "forge-lsp-lua-macos-aarch64.zip",
+        "binary": "forge-lsp-lua"
+      },
+      "macos-x86_64": {
+        "archive": "forge-lsp-lua-macos-x86_64.zip",
+        "binary": "forge-lsp-lua"
+      },
+      "windows-x86_64": {
+        "archive": "forge-lsp-lua-windows-x86_64.zip",
+        "binary": "forge-lsp-lua.exe"
+      }
+    }
+  },
+  "markdown": {
+    "name": "Markdown",
+    "description": "Markdown language support for Forge: marksman, preferring an install already on PATH, otherwise downloading a pinned release automatically.",
+    "version": "0.1.0",
+    "repo": "mentenaz/Forge.Rust.LSP",
+    "language_id": "markdown",
+    "file_extensions": [
+      "md",
+      "markdown"
+    ],
+    "args": [],
+    "assets": {
+      "linux-aarch64": {
+        "archive": "forge-lsp-markdown-linux-aarch64.zip",
+        "binary": "forge-lsp-markdown"
+      },
+      "linux-x86_64": {
+        "archive": "forge-lsp-markdown-linux-x86_64.zip",
+        "binary": "forge-lsp-markdown"
+      },
+      "macos-aarch64": {
+        "archive": "forge-lsp-markdown-macos-aarch64.zip",
+        "binary": "forge-lsp-markdown"
+      },
+      "macos-x86_64": {
+        "archive": "forge-lsp-markdown-macos-x86_64.zip",
+        "binary": "forge-lsp-markdown"
+      },
+      "windows-x86_64": {
+        "archive": "forge-lsp-markdown-windows-x86_64.zip",
+        "binary": "forge-lsp-markdown.exe"
+      }
+    }
+  },
+  "powershell": {
+    "name": "PowerShell",
+    "description": "PowerShell language support for Forge: wraps PowerShellEditorServices, downloaded automatically on first use.",
+    "version": "0.1.0",
+    "repo": "mentenaz/Forge.Rust.LSP",
+    "language_id": "powershell",
+    "file_extensions": [
+      "ps1",
+      "psm1",
+      "psd1"
+    ],
+    "args": [],
+    "assets": {
+      "linux-aarch64": {
+        "archive": "forge-lsp-powershell-linux-aarch64.zip",
+        "binary": "forge-lsp-powershell"
+      },
+      "linux-x86_64": {
+        "archive": "forge-lsp-powershell-linux-x86_64.zip",
+        "binary": "forge-lsp-powershell"
+      },
+      "macos-aarch64": {
+        "archive": "forge-lsp-powershell-macos-aarch64.zip",
+        "binary": "forge-lsp-powershell"
+      },
+      "macos-x86_64": {
+        "archive": "forge-lsp-powershell-macos-x86_64.zip",
+        "binary": "forge-lsp-powershell"
+      },
+      "windows-aarch64": {
+        "archive": "forge-lsp-powershell-windows-aarch64.zip",
+        "binary": "forge-lsp-powershell.exe"
+      },
+      "windows-x86_64": {
+        "archive": "forge-lsp-powershell-windows-x86_64.zip",
+        "binary": "forge-lsp-powershell.exe"
+      }
+    }
+  },
+  "python": {
+    "name": "Python",
+    "description": "Python language support for Forge: basedpyright or pyright (auto-installed via npm), falling back to pylsp/jedi-language-server already on PATH.",
+    "version": "0.1.0",
+    "repo": "mentenaz/Forge.Rust.LSP",
+    "language_id": "python",
+    "file_extensions": [
+      "py",
+      "pyi",
+      "pyw"
+    ],
+    "args": [],
+    "assets": {
+      "linux-aarch64": {
+        "archive": "forge-lsp-python-linux-aarch64.zip",
+        "binary": "forge-lsp-python"
+      },
+      "linux-x86_64": {
+        "archive": "forge-lsp-python-linux-x86_64.zip",
+        "binary": "forge-lsp-python"
+      },
+      "macos-aarch64": {
+        "archive": "forge-lsp-python-macos-aarch64.zip",
+        "binary": "forge-lsp-python"
+      },
+      "macos-x86_64": {
+        "archive": "forge-lsp-python-macos-x86_64.zip",
+        "binary": "forge-lsp-python"
+      },
+      "windows-aarch64": {
+        "archive": "forge-lsp-python-windows-aarch64.zip",
+        "binary": "forge-lsp-python.exe"
+      },
+      "windows-x86_64": {
+        "archive": "forge-lsp-python-windows-x86_64.zip",
+        "binary": "forge-lsp-python.exe"
+      }
+    }
+  },
+  "rust": {
+    "name": "Rust",
+    "description": "Rust language support for Forge: rust-analyzer, preferring the toolchain-matched install already on PATH, otherwise downloading a pinned release automatically.",
+    "version": "0.1.0",
+    "repo": "mentenaz/Forge.Rust.LSP",
+    "language_id": "rust",
+    "file_extensions": [
+      "rs"
+    ],
+    "args": [],
+    "assets": {
+      "linux-aarch64": {
+        "archive": "forge-lsp-rust-linux-aarch64.zip",
+        "binary": "forge-lsp-rust"
+      },
+      "linux-x86_64": {
+        "archive": "forge-lsp-rust-linux-x86_64.zip",
+        "binary": "forge-lsp-rust"
+      },
+      "macos-aarch64": {
+        "archive": "forge-lsp-rust-macos-aarch64.zip",
+        "binary": "forge-lsp-rust"
+      },
+      "macos-x86_64": {
+        "archive": "forge-lsp-rust-macos-x86_64.zip",
+        "binary": "forge-lsp-rust"
+      },
+      "windows-aarch64": {
+        "archive": "forge-lsp-rust-windows-aarch64.zip",
+        "binary": "forge-lsp-rust.exe"
+      },
+      "windows-x86_64": {
+        "archive": "forge-lsp-rust-windows-x86_64.zip",
+        "binary": "forge-lsp-rust.exe"
+      }
+    }
+  },
+  "toml": {
+    "name": "TOML",
+    "description": "TOML language support for Forge: taplo, preferring an install already on PATH, otherwise downloading a pinned release automatically.",
+    "version": "0.1.0",
+    "repo": "mentenaz/Forge.Rust.LSP",
+    "language_id": "toml",
+    "file_extensions": [
+      "toml"
+    ],
+    "args": [],
+    "assets": {
+      "linux-aarch64": {
+        "archive": "forge-lsp-toml-linux-aarch64.zip",
+        "binary": "forge-lsp-toml"
+      },
+      "linux-x86_64": {
+        "archive": "forge-lsp-toml-linux-x86_64.zip",
+        "binary": "forge-lsp-toml"
+      },
+      "macos-aarch64": {
+        "archive": "forge-lsp-toml-macos-aarch64.zip",
+        "binary": "forge-lsp-toml"
+      },
+      "macos-x86_64": {
+        "archive": "forge-lsp-toml-macos-x86_64.zip",
+        "binary": "forge-lsp-toml"
+      },
+      "windows-aarch64": {
+        "archive": "forge-lsp-toml-windows-aarch64.zip",
+        "binary": "forge-lsp-toml.exe"
+      },
+      "windows-x86_64": {
+        "archive": "forge-lsp-toml-windows-x86_64.zip",
+        "binary": "forge-lsp-toml.exe"
+      }
+    }
+  },
+  "zig": {
+    "name": "Zig",
+    "description": "Zig language support for Forge: zls, preferring an install already on PATH, otherwise downloading a pinned release automatically. Requires a Zig toolchain on PATH for full features.",
+    "version": "0.1.0",
+    "repo": "mentenaz/Forge.Rust.LSP",
+    "language_id": "zig",
+    "file_extensions": [
+      "zig"
+    ],
+    "args": [],
+    "assets": {
+      "linux-aarch64": {
+        "archive": "forge-lsp-zig-linux-aarch64.zip",
+        "binary": "forge-lsp-zig"
+      },
+      "linux-x86_64": {
+        "archive": "forge-lsp-zig-linux-x86_64.zip",
+        "binary": "forge-lsp-zig"
+      },
+      "macos-aarch64": {
+        "archive": "forge-lsp-zig-macos-aarch64.zip",
+        "binary": "forge-lsp-zig"
+      },
+      "macos-x86_64": {
+        "archive": "forge-lsp-zig-macos-x86_64.zip",
+        "binary": "forge-lsp-zig"
+      },
+      "windows-aarch64": {
+        "archive": "forge-lsp-zig-windows-aarch64.zip",
+        "binary": "forge-lsp-zig.exe"
+      },
+      "windows-x86_64": {
+        "archive": "forge-lsp-zig-windows-x86_64.zip",
+        "binary": "forge-lsp-zig.exe"
       }
     }
   }

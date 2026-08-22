@@ -1,0 +1,11 @@
+[package]
+name = "forge-lsp-lua"
+version = "0.1.0"
+edition.workspace = true
+
+[[bin]]
+name = "forge-lsp-lua"
+path = "src/main.rs"
+
+[dependencies]
+forge-lsp-proxy = { path = "../common" }

@@ -4,6 +4,14 @@ members = [
     "Json",
     "CSharp",
     "powershell",
+    "Rust",
+    "Python",
+    "Cpp",
+    "Lua",
+    "Toml",
+    "Markdown",
+    "Zig",
+    "common",
     "tools/registry-gen",
 ]
 
