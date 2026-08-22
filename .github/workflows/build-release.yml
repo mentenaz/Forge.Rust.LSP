@@ -8,8 +8,11 @@ on:
 jobs:
   build:
     strategy:
+      # One broken leg must not cancel the other platform builds.
+      fail-fast: false
       matrix:
         include:
+          # Native builds
           - os: windows-latest
             platform: windows-x86_64
             suffix: .exe
@@ -19,26 +22,64 @@ jobs:
           - os: ubuntu-latest
             platform: linux-x86_64
             suffix: ''
+          # Cross-compiled legs so every platform advertised in
+          # forge-registry.json gets a real release asset. All packages here
+          # are pure Rust (std/serde/zip), so only the linker differs.
+          - os: windows-latest
+            platform: windows-aarch64
+            target: aarch64-pc-windows-msvc
+            suffix: .exe
+          - os: macos-latest
+            platform: macos-x86_64
+            target: x86_64-apple-darwin
+            suffix: ''
+          - os: ubuntu-latest
+            platform: linux-aarch64
+            target: aarch64-unknown-linux-gnu
+            suffix: ''
     runs-on: ${{ matrix.os }}
+    env:
+      # Linker for the linux-aarch64 cross leg (installed below). Ignored by
+      # every other matrix leg.
+      CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install aarch64 Linux cross linker
+        if: matrix.platform == 'linux-aarch64'
+        run: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
 
       - name: Build all language server packages
-        run: cargo build --release --workspace --exclude forge-registry-gen
+        shell: bash
+        run: |
+          set -euo pipefail
+          target="${{ matrix.target }}"
+          if [ -n "$target" ]; then
+            cargo build --release --workspace --exclude forge-registry-gen --target "$target"
+          else
+            cargo build --release --workspace --exclude forge-registry-gen
+          fi
 
       - name: Package each language server per platform
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p dist
+          profile="target/release"
+          target="${{ matrix.target }}"
+          if [ -n "$target" ]; then
+            profile="target/$target/release"
+          fi
           for manifest in */forge-extension.toml; do
             dir="$(dirname "$manifest")"
             binary="$(sed -n 's/^binary *= *"\([^"]*\)"/\1/p' "$manifest" | head -n1)"
             [ -n "$binary" ] || { echo "no binary in $manifest"; exit 1; }
-            cp "target/release/$binary${{ matrix.suffix }}" "dist/$binary${{ matrix.suffix }}"
+            cp "$profile/$binary${{ matrix.suffix }}" "dist/$binary${{ matrix.suffix }}"
             if [ "$RUNNER_OS" = "Windows" ]; then
               powershell -Command "Compress-Archive -Path 'dist/$binary${{ matrix.suffix }}' -DestinationPath 'dist/$binary-${{ matrix.platform }}.zip' -Force"
             else
