@@ -1,0 +1,14 @@
+id = "bash"
+name = "Bash"
+description = "Shell language support for Forge: bash-language-server, preferring an install already on PATH, otherwise installing a pinned npm package automatically (requires Node.js)."
+version = "0.1.0"
+schema_version = 1
+authors = ["Mentenaz"]
+
+[language]
+language_id = "shellscript"
+file_extensions = ["sh", "bash", "zsh", "ksh"]
+
+[language_server]
+binary = "forge-lsp-bash"
+args = []

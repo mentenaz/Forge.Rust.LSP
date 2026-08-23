@@ -1,0 +1,11 @@
+[package]
+name = "forge-lsp-sql"
+version = "0.1.0"
+edition.workspace = true
+
+[[bin]]
+name = "forge-lsp-sql"
+path = "src/main.rs"
+
+[dependencies]
+forge-lsp-proxy = { path = "../common" }

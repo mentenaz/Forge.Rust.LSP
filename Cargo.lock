@@ -131,6 +131,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "forge-lsp-bash"
+version = "0.1.0"
+dependencies = [
+ "forge-lsp-proxy",
+]
+
+[[package]]
 name = "forge-lsp-cpp"
 version = "0.1.0"
 dependencies = [
@@ -140,6 +147,34 @@ dependencies = [
 [[package]]
 name = "forge-lsp-csharp"
 version = "0.1.0"
+
+[[package]]
+name = "forge-lsp-css"
+version = "0.1.0"
+dependencies = [
+ "forge-lsp-proxy",
+]
+
+[[package]]
+name = "forge-lsp-dart"
+version = "0.1.0"
+dependencies = [
+ "forge-lsp-proxy",
+]
+
+[[package]]
+name = "forge-lsp-go"
+version = "0.1.0"
+dependencies = [
+ "forge-lsp-proxy",
+]
+
+[[package]]
+name = "forge-lsp-html"
+version = "0.1.0"
+dependencies = [
+ "forge-lsp-proxy",
+]
 
 [[package]]
 name = "forge-lsp-json"
@@ -197,6 +232,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "forge-lsp-sql"
+version = "0.1.0"
+dependencies = [
+ "forge-lsp-proxy",
+]
+
+[[package]]
+name = "forge-lsp-terraform"
+version = "0.1.0"
+dependencies = [
+ "forge-lsp-proxy",
+]
+
+[[package]]
 name = "forge-lsp-toml"
 version = "0.1.0"
 dependencies = [
@@ -205,6 +254,13 @@ dependencies = [
 
 [[package]]
 name = "forge-lsp-typescript"
+version = "0.1.0"
+dependencies = [
+ "forge-lsp-proxy",
+]
+
+[[package]]
+name = "forge-lsp-yaml"
 version = "0.1.0"
 dependencies = [
  "forge-lsp-proxy",

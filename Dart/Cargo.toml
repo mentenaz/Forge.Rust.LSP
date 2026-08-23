@@ -1,0 +1,11 @@
+[package]
+name = "forge-lsp-dart"
+version = "0.1.0"
+edition.workspace = true
+
+[[bin]]
+name = "forge-lsp-dart"
+path = "src/main.rs"
+
+[dependencies]
+forge-lsp-proxy = { path = "../common" }

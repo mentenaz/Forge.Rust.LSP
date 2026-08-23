@@ -29,6 +29,7 @@ fn main() {
         path_candidates: &[PathCandidate { program: "clangd", args: &[] }],
         engine_args: &["--background-index"],
         cwd_engine_root: true,
+        asset_url: None,
     };
     std::process::exit(forge_lsp_proxy::run(&spec));
 }

@@ -32,6 +32,7 @@ fn main() {
         path_candidates: &[PathCandidate { program: "lua-language-server", args: &[] }],
         engine_args: &[],
         cwd_engine_root: true,
+        asset_url: None,
     };
     std::process::exit(forge_lsp_proxy::run(&spec));
 }

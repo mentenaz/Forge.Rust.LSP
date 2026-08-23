@@ -35,11 +35,19 @@ printf 'Content-Length: 75\r\n\r\n{"jsonrpc":"2.0","id":1,"method":"initialize",
 - Engine resolution chains:
   - C#: roslyn dotnet tool (auto-installs) → VS Code C# ext → omnisharp → csharp-ls.
   - Python: basedpyright/pyright/pylsp/jedi on PATH → npm install of basedpyright.
-  - Rust/Cpp/Lua/Toml/Markdown/Zig/TypeScript: engine on PATH wins → pinned GitHub release
+  - Rust/Cpp/Lua/Toml/Markdown/Zig/TypeScript/Sql: engine on PATH wins → pinned GitHub release
     download (`TAG` const + asset names must be bumped together; see each package's `main.rs`).
     TypeScript wraps native TS7 (typescript-go) with NO PATH probe (npm `tsc` has no LSP mode);
     its tag contains a slash (`typescript/v7.0.2`) — cache dirs flatten `/`→`_`, don't assume
     `<lang>/<tag>` equals the raw tag.
+    Sql ships x86_64-only upstream (`platforms` restriction in its manifest).
+  - Terraform: PATH-first → pinned download from releases.hashicorp.com via the EngineSpec
+    `asset_url` direct-URL resolver (bypasses the GitHub API entirely); needs `serve` arg.
+  - Bash/Yaml/Html/Css: server on PATH wins → pinned npm package installed with
+    `npm install --prefix <engine cache>/npm`, spawned as `node <entry.js>` (needs node+npm on
+    PATH; entry paths are per-package consts verified against the npm package layout).
+  - Go/Dart: PATH-only, no download fallback (gopls needs `go install`; Dart's LSP lives in the
+    SDK as `dart language-server`) — missing-engine cases print install instructions, exit 1.
 - `forge-extension.toml` accepts an optional `platforms = [...]` under `[language_server]`;
   omit it only if the upstream engine ships all six platforms (e.g. clangd has no ARM builds).
 - Release flow: push tag `v*` → `.github/workflows/build-release.yml` builds all six

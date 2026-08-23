@@ -1,0 +1,11 @@
+[package]
+name = "forge-lsp-go"
+version = "0.1.0"
+edition.workspace = true
+
+[[bin]]
+name = "forge-lsp-go"
+path = "src/main.rs"
+
+[dependencies]
+forge-lsp-proxy = { path = "../common" }

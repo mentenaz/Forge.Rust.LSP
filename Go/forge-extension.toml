@@ -1,0 +1,14 @@
+id = "go"
+name = "Go"
+description = "Go language support for Forge: gopls. Requires gopls on PATH (installed via the Go toolchain)."
+version = "0.1.0"
+schema_version = 1
+authors = ["Mentenaz"]
+
+[language]
+language_id = "go"
+file_extensions = ["go"]
+
+[language_server]
+binary = "forge-lsp-go"
+args = []

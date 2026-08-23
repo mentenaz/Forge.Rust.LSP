@@ -75,6 +75,10 @@ pub struct EngineSpec {
     pub engine_args: &'static [&'static str],
     /// Run the engine with cwd = extraction root (engines needing sibling resources).
     pub cwd_engine_root: bool,
+    /// Resolves a direct download URL for `platform`, bypassing the GitHub
+    /// release lookup entirely (engines hosted outside GitHub assets, e.g.
+    /// releases.hashicorp.com). Takes precedence over `platform_asset`.
+    pub asset_url: Option<fn(platform: &str, tag: &str) -> Option<String>>,
 }
 
 // ── Runner ───────────────────────────────────────────────────────────────────
@@ -137,7 +141,10 @@ fn ensure_engine(spec: &EngineSpec) -> Result<ResolvedEngine, String> {
         repo = spec.repo,
         asset = asset_name
     );
-    let bytes = download_release_asset(spec, asset_name)?;
+    let bytes = match spec.asset_url.and_then(|resolve| resolve(platform, spec.tag)) {
+        Some(url) => download_bytes(&url, &format!("forge-lsp-{}", spec.lang)),
+        None => download_release_asset(spec, asset_name),
+    }?;
 
     if dir.exists() {
         fs::remove_dir_all(&dir).map_err(|err| format!("clearing {}: {err}", dir.display()))?;
@@ -194,8 +201,12 @@ fn download_release_asset(spec: &EngineSpec, asset_name: &str) -> Result<Vec<u8>
         })
         .ok_or_else(|| format!("no asset '{asset_name}' in {} release", spec.repo))?;
 
-    let mut reader = ureq::get(&url)
-        .set("User-Agent", &agent)
+    download_bytes(&url, &agent)
+}
+
+fn download_bytes(url: &str, agent: &str) -> Result<Vec<u8>, String> {
+    let mut reader = ureq::get(url)
+        .set("User-Agent", agent)
         .call()
         .map_err(|err| format!("downloading {url}: {err}"))?
         .into_reader();
@@ -352,8 +363,13 @@ fn collect_matches(dir: &Path, expected: &str, matches: &mut Vec<PathBuf>) {
 
 // ── Cache layout ─────────────────────────────────────────────────────────────
 
-fn cache_root() -> PathBuf {
-    #[cfg(windows)]
+/// Per-language engine cache directory, shared layout for all wrappers
+/// (`%LOCALAPPDATA%\forge\lsp-engines\<lang>` on Windows).
+pub fn engine_cache_dir(lang: &str) -> PathBuf {
+    cache_root().join(lang)
+}
+
+fn cache_root() -> PathBuf {    #[cfg(windows)]
     {
         let base = std::env::var_os("LOCALAPPDATA")
             .map(PathBuf::from)

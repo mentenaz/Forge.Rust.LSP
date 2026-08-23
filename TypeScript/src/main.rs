@@ -35,6 +35,7 @@ fn main() {
         path_candidates: &[],
         engine_args: &["--lsp", "--stdio"],
         cwd_engine_root: false,
+        asset_url: None,
     };
     std::process::exit(forge_lsp_proxy::run(&spec));
 }

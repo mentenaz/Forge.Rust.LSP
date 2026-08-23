@@ -1,4 +1,44 @@
 {
+  "bash": {
+    "name": "Bash",
+    "description": "Shell language support for Forge: bash-language-server, preferring an install already on PATH, otherwise installing a pinned npm package automatically (requires Node.js).",
+    "version": "0.1.0",
+    "repo": "mentenaz/Forge.Rust.LSP",
+    "language_id": "shellscript",
+    "file_extensions": [
+      "sh",
+      "bash",
+      "zsh",
+      "ksh"
+    ],
+    "args": [],
+    "assets": {
+      "linux-aarch64": {
+        "archive": "forge-lsp-bash-linux-aarch64.zip",
+        "binary": "forge-lsp-bash"
+      },
+      "linux-x86_64": {
+        "archive": "forge-lsp-bash-linux-x86_64.zip",
+        "binary": "forge-lsp-bash"
+      },
+      "macos-aarch64": {
+        "archive": "forge-lsp-bash-macos-aarch64.zip",
+        "binary": "forge-lsp-bash"
+      },
+      "macos-x86_64": {
+        "archive": "forge-lsp-bash-macos-x86_64.zip",
+        "binary": "forge-lsp-bash"
+      },
+      "windows-aarch64": {
+        "archive": "forge-lsp-bash-windows-aarch64.zip",
+        "binary": "forge-lsp-bash.exe"
+      },
+      "windows-x86_64": {
+        "archive": "forge-lsp-bash-windows-x86_64.zip",
+        "binary": "forge-lsp-bash.exe"
+      }
+    }
+  },
   "cpp": {
     "name": "C/C++",
     "description": "C and C++ language support for Forge: clangd, preferring an install already on PATH, otherwise downloading a pinned clangd release automatically.",
@@ -72,6 +112,157 @@
       "windows-x86_64": {
         "archive": "forge-lsp-csharp-windows-x86_64.zip",
         "binary": "forge-lsp-csharp.exe"
+      }
+    }
+  },
+  "css": {
+    "name": "CSS",
+    "description": "CSS language support for Forge: vscode-css-language-server, preferring an install already on PATH, otherwise installing a pinned npm package automatically (requires Node.js).",
+    "version": "0.1.0",
+    "repo": "mentenaz/Forge.Rust.LSP",
+    "language_id": "css",
+    "file_extensions": [
+      "css",
+      "scss",
+      "less"
+    ],
+    "args": [],
+    "assets": {
+      "linux-aarch64": {
+        "archive": "forge-lsp-css-linux-aarch64.zip",
+        "binary": "forge-lsp-css"
+      },
+      "linux-x86_64": {
+        "archive": "forge-lsp-css-linux-x86_64.zip",
+        "binary": "forge-lsp-css"
+      },
+      "macos-aarch64": {
+        "archive": "forge-lsp-css-macos-aarch64.zip",
+        "binary": "forge-lsp-css"
+      },
+      "macos-x86_64": {
+        "archive": "forge-lsp-css-macos-x86_64.zip",
+        "binary": "forge-lsp-css"
+      },
+      "windows-aarch64": {
+        "archive": "forge-lsp-css-windows-aarch64.zip",
+        "binary": "forge-lsp-css.exe"
+      },
+      "windows-x86_64": {
+        "archive": "forge-lsp-css-windows-x86_64.zip",
+        "binary": "forge-lsp-css.exe"
+      }
+    }
+  },
+  "dart": {
+    "name": "Dart",
+    "description": "Dart language support for Forge: the analyzer server built into the Dart SDK. Requires dart on PATH (Dart or Flutter SDK).",
+    "version": "0.1.0",
+    "repo": "mentenaz/Forge.Rust.LSP",
+    "language_id": "dart",
+    "file_extensions": [
+      "dart"
+    ],
+    "args": [],
+    "assets": {
+      "linux-aarch64": {
+        "archive": "forge-lsp-dart-linux-aarch64.zip",
+        "binary": "forge-lsp-dart"
+      },
+      "linux-x86_64": {
+        "archive": "forge-lsp-dart-linux-x86_64.zip",
+        "binary": "forge-lsp-dart"
+      },
+      "macos-aarch64": {
+        "archive": "forge-lsp-dart-macos-aarch64.zip",
+        "binary": "forge-lsp-dart"
+      },
+      "macos-x86_64": {
+        "archive": "forge-lsp-dart-macos-x86_64.zip",
+        "binary": "forge-lsp-dart"
+      },
+      "windows-aarch64": {
+        "archive": "forge-lsp-dart-windows-aarch64.zip",
+        "binary": "forge-lsp-dart.exe"
+      },
+      "windows-x86_64": {
+        "archive": "forge-lsp-dart-windows-x86_64.zip",
+        "binary": "forge-lsp-dart.exe"
+      }
+    }
+  },
+  "go": {
+    "name": "Go",
+    "description": "Go language support for Forge: gopls. Requires gopls on PATH (installed via the Go toolchain).",
+    "version": "0.1.0",
+    "repo": "mentenaz/Forge.Rust.LSP",
+    "language_id": "go",
+    "file_extensions": [
+      "go"
+    ],
+    "args": [],
+    "assets": {
+      "linux-aarch64": {
+        "archive": "forge-lsp-go-linux-aarch64.zip",
+        "binary": "forge-lsp-go"
+      },
+      "linux-x86_64": {
+        "archive": "forge-lsp-go-linux-x86_64.zip",
+        "binary": "forge-lsp-go"
+      },
+      "macos-aarch64": {
+        "archive": "forge-lsp-go-macos-aarch64.zip",
+        "binary": "forge-lsp-go"
+      },
+      "macos-x86_64": {
+        "archive": "forge-lsp-go-macos-x86_64.zip",
+        "binary": "forge-lsp-go"
+      },
+      "windows-aarch64": {
+        "archive": "forge-lsp-go-windows-aarch64.zip",
+        "binary": "forge-lsp-go.exe"
+      },
+      "windows-x86_64": {
+        "archive": "forge-lsp-go-windows-x86_64.zip",
+        "binary": "forge-lsp-go.exe"
+      }
+    }
+  },
+  "html": {
+    "name": "HTML",
+    "description": "HTML language support for Forge: vscode-html-language-server, preferring an install already on PATH, otherwise installing a pinned npm package automatically (requires Node.js).",
+    "version": "0.1.0",
+    "repo": "mentenaz/Forge.Rust.LSP",
+    "language_id": "html",
+    "file_extensions": [
+      "html",
+      "htm"
+    ],
+    "args": [],
+    "assets": {
+      "linux-aarch64": {
+        "archive": "forge-lsp-html-linux-aarch64.zip",
+        "binary": "forge-lsp-html"
+      },
+      "linux-x86_64": {
+        "archive": "forge-lsp-html-linux-x86_64.zip",
+        "binary": "forge-lsp-html"
+      },
+      "macos-aarch64": {
+        "archive": "forge-lsp-html-macos-aarch64.zip",
+        "binary": "forge-lsp-html"
+      },
+      "macos-x86_64": {
+        "archive": "forge-lsp-html-macos-x86_64.zip",
+        "binary": "forge-lsp-html"
+      },
+      "windows-aarch64": {
+        "archive": "forge-lsp-html-windows-aarch64.zip",
+        "binary": "forge-lsp-html.exe"
+      },
+      "windows-x86_64": {
+        "archive": "forge-lsp-html-windows-x86_64.zip",
+        "binary": "forge-lsp-html.exe"
       }
     }
   },
@@ -295,6 +486,69 @@
       }
     }
   },
+  "sql": {
+    "name": "SQL",
+    "description": "SQL language support for Forge: sqls, preferring an install already on PATH, otherwise downloading a pinned release automatically.",
+    "version": "0.1.0",
+    "repo": "mentenaz/Forge.Rust.LSP",
+    "language_id": "sql",
+    "file_extensions": [
+      "sql"
+    ],
+    "args": [],
+    "assets": {
+      "linux-x86_64": {
+        "archive": "forge-lsp-sql-linux-x86_64.zip",
+        "binary": "forge-lsp-sql"
+      },
+      "macos-x86_64": {
+        "archive": "forge-lsp-sql-macos-x86_64.zip",
+        "binary": "forge-lsp-sql"
+      },
+      "windows-x86_64": {
+        "archive": "forge-lsp-sql-windows-x86_64.zip",
+        "binary": "forge-lsp-sql.exe"
+      }
+    }
+  },
+  "terraform": {
+    "name": "Terraform",
+    "description": "HashiCorp Terraform language support for Forge: terraform-ls, preferring an install already on PATH, otherwise downloading a pinned release from releases.hashicorp.com automatically.",
+    "version": "0.1.0",
+    "repo": "mentenaz/Forge.Rust.LSP",
+    "language_id": "terraform",
+    "file_extensions": [
+      "tf",
+      "tfvars"
+    ],
+    "args": [],
+    "assets": {
+      "linux-aarch64": {
+        "archive": "forge-lsp-terraform-linux-aarch64.zip",
+        "binary": "forge-lsp-terraform"
+      },
+      "linux-x86_64": {
+        "archive": "forge-lsp-terraform-linux-x86_64.zip",
+        "binary": "forge-lsp-terraform"
+      },
+      "macos-aarch64": {
+        "archive": "forge-lsp-terraform-macos-aarch64.zip",
+        "binary": "forge-lsp-terraform"
+      },
+      "macos-x86_64": {
+        "archive": "forge-lsp-terraform-macos-x86_64.zip",
+        "binary": "forge-lsp-terraform"
+      },
+      "windows-aarch64": {
+        "archive": "forge-lsp-terraform-windows-aarch64.zip",
+        "binary": "forge-lsp-terraform.exe"
+      },
+      "windows-x86_64": {
+        "archive": "forge-lsp-terraform-windows-x86_64.zip",
+        "binary": "forge-lsp-terraform.exe"
+      }
+    }
+  },
   "toml": {
     "name": "TOML",
     "description": "TOML language support for Forge: taplo, preferring an install already on PATH, otherwise downloading a pinned release automatically.",
@@ -373,6 +627,44 @@
       "windows-x86_64": {
         "archive": "forge-lsp-typescript-windows-x86_64.zip",
         "binary": "forge-lsp-typescript.exe"
+      }
+    }
+  },
+  "yaml": {
+    "name": "YAML",
+    "description": "YAML language support for Forge: yaml-language-server, preferring an install already on PATH, otherwise installing a pinned npm package automatically (requires Node.js).",
+    "version": "0.1.0",
+    "repo": "mentenaz/Forge.Rust.LSP",
+    "language_id": "yaml",
+    "file_extensions": [
+      "yaml",
+      "yml"
+    ],
+    "args": [],
+    "assets": {
+      "linux-aarch64": {
+        "archive": "forge-lsp-yaml-linux-aarch64.zip",
+        "binary": "forge-lsp-yaml"
+      },
+      "linux-x86_64": {
+        "archive": "forge-lsp-yaml-linux-x86_64.zip",
+        "binary": "forge-lsp-yaml"
+      },
+      "macos-aarch64": {
+        "archive": "forge-lsp-yaml-macos-aarch64.zip",
+        "binary": "forge-lsp-yaml"
+      },
+      "macos-x86_64": {
+        "archive": "forge-lsp-yaml-macos-x86_64.zip",
+        "binary": "forge-lsp-yaml"
+      },
+      "windows-aarch64": {
+        "archive": "forge-lsp-yaml-windows-aarch64.zip",
+        "binary": "forge-lsp-yaml.exe"
+      },
+      "windows-x86_64": {
+        "archive": "forge-lsp-yaml-windows-x86_64.zip",
+        "binary": "forge-lsp-yaml.exe"
       }
     }
   },

@@ -1,0 +1,11 @@
+[package]
+name = "forge-lsp-bash"
+version = "0.1.0"
+edition.workspace = true
+
+[[bin]]
+name = "forge-lsp-bash"
+path = "src/main.rs"
+
+[dependencies]
+forge-lsp-proxy = { path = "../common" }

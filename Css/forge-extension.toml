@@ -1,0 +1,14 @@
+id = "css"
+name = "CSS"
+description = "CSS language support for Forge: vscode-css-language-server, preferring an install already on PATH, otherwise installing a pinned npm package automatically (requires Node.js)."
+version = "0.1.0"
+schema_version = 1
+authors = ["Mentenaz"]
+
+[language]
+language_id = "css"
+file_extensions = ["css", "scss", "less"]
+
+[language_server]
+binary = "forge-lsp-css"
+args = []

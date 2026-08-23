@@ -1,0 +1,14 @@
+id = "dart"
+name = "Dart"
+description = "Dart language support for Forge: the analyzer server built into the Dart SDK. Requires dart on PATH (Dart or Flutter SDK)."
+version = "0.1.0"
+schema_version = 1
+authors = ["Mentenaz"]
+
+[language]
+language_id = "dart"
+file_extensions = ["dart"]
+
+[language_server]
+binary = "forge-lsp-dart"
+args = []

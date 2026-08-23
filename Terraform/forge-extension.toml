@@ -1,0 +1,14 @@
+id = "terraform"
+name = "Terraform"
+description = "HashiCorp Terraform language support for Forge: terraform-ls, preferring an install already on PATH, otherwise downloading a pinned release from releases.hashicorp.com automatically."
+version = "0.1.0"
+schema_version = 1
+authors = ["Mentenaz"]
+
+[language]
+language_id = "terraform"
+file_extensions = ["tf", "tfvars"]
+
+[language_server]
+binary = "forge-lsp-terraform"
+args = []
