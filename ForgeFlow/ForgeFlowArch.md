@@ -84,7 +84,9 @@ directly for LSP `Range` positions later with no offset translation needed.
 
 **Token categories (`Kind`):** `Kw` (reserved word), `Type` (primitive type
 name), `Lit` (`waar`/`onwaar`/`niks`/`true`/`false`), `Ident`, `Str`, `Num`,
-`Op`, `Punct`, `Comment` (declared, never constructed — see §8), `Unknown`
+`Op`, `Punct`, `Comment` (unused as a token kind — comments are emitted only
+as `Role::Comment` _semantic_ tokens, never into the parser's stream — see
+§3/§8), `Unknown`
 (anything unrecognized; always pushes a diagnostic).
 
 **Keyword classification is three flat `&[&str]` lists** — `KEYWORDS`,
@@ -95,10 +97,15 @@ file-scoping design (delta doc) will need this lexer function to accept a
 `file_mode_for(uri)` already exists and is computed at every call site, it's
 just never passed into `lex()` itself.
 
-**Comments are consumed, not tokenized** — `//` and `/* */` handling
-advances the position and `continue`s without ever pushing a `Tok`. This is
-why `Kind::Comment` is dead code (§8) and why semantic-token coloring can
-never highlight a comment under the current implementation.
+**Comments are tokenized as a `Comment` semantic token (since v0.6.5) but
+kept out of the parser's token stream** — `//` and `/* */` handling records
+the span, pushes a `SemToken { role: Comment }` into a dedicated
+`comment_sems` vec, and `continue`s without pushing a `Tok`. `lex()` returns
+that vec as its third element; the `semanticTokens/full` handler merges it
+with the parser's `sems` (sorted by position) before encoding. This is why
+`Kind::Comment` is no longer dead code and why comments are now
+highlightable — but they never affect parsing or diagnostics, since the
+parser never sees them.
 
 **Fixed (v0.6.4):** the number-literal loop now only accepts `.` once and
 only while no exponent has been seen, `e`/`E` once, and `-`/`+` only
@@ -269,13 +276,14 @@ Concrete checklist, in the order these tend to matter, for `tak`/`probeer`/
 
 ## 8. Current dead/unused code, and why
 
-- **`Kind::Comment` / `Role::Comment`** — declared in both enums, never
-  constructed anywhere (confirmed by grep — zero hits for `Kind::Comment`
-  as a value, one hit for `Role::Comment` and it's inside `role_to_index`'s
-  match arm, which only handles the case _if_ one ever existed). Root
-  cause: the lexer skips comment text without emitting a token at all (§3).
-  Harmless to leave; correct to eventually either wire up real comment
-  tokens or delete both unused variants.
+- **`Kind::Comment` / `Role::Comment`** — previously dead: the lexer skipped
+  comment text without emitting a token (§3). **As of v0.6.5 this is no
+  longer dead** — `lex()` now pushes a `SemToken { role: Comment }` for each
+  `//`/`/* */` span into its returned `comment_sems` vec, and the
+  `semanticTokens/full` handler encodes them (§3 details the mechanics).
+  `Role::Comment` is now genuinely used; `Kind::Comment` remains unused as a
+  _token kind_ (comments are never put into the parser's `toks` stream — only
+  their semantic tokens survive), which is intentional.
 - **`Kind::Kw` arm in `parse_primary`** matching `waar`/`onwaar`/`niks`/
   `true`/`false` — unreachable. These words are always lexed as `Kind::Lit`
   (checked before `Kind::Kw` in the lexer's classification order), so the

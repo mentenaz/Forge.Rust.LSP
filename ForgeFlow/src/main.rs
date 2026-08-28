@@ -78,9 +78,10 @@ const KEYWORDS: &[&str] = &[
 const TYPE_KW: &[&str] = &["lyn", "nmr", "vraag", "objk", "lys", "enige", "leeg"];
 const LIT_KW: &[&str] = &["waar", "onwaar", "niks"];
 
-fn lex(src: &str) -> (Vec<Tok>, Vec<Diag>) {
+fn lex(src: &str) -> (Vec<Tok>, Vec<Diag>, Vec<SemToken>) {
     let mut toks = Vec::new();
     let mut diags = Vec::new();
+    let mut comment_sems = Vec::new();
     let chars: Vec<(usize, char)> = src.char_indices().collect();
     let mut i = 0usize;
     let mut line: usize = 0;
@@ -101,8 +102,12 @@ fn lex(src: &str) -> (Vec<Tok>, Vec<Diag>) {
             continue;
         }
 
-        // Comments (line + block) — skipped, not tokenized.
+        // Comments (line + block) — tokenized as a `Comment` semantic token
+        // but kept OUT of the parser's token stream (the parser never sees
+        // them, so structure/diagnostics are unchanged).
         if c == '/' && at(i + 1).map(|(_, n)| n) == Some('/') {
+            let start_line = line;
+            let start_col = col;
             while let Some((_, n)) = at(i) {
                 if n == '\n' {
                     break;
@@ -110,9 +115,14 @@ fn lex(src: &str) -> (Vec<Tok>, Vec<Diag>) {
                 col += 1;
                 i += 1;
             }
+            let len = col - start_col;
+            comment_sems.push(SemToken { role: Role::Comment, line: start_line, col: start_col, len });
             continue;
         }
         if c == '/' && at(i + 1).map(|(_, n)| n) == Some('*') {
+            let start_line = line;
+            let start_col = col;
+            let mut clen = 2usize;
             col += 2;
             i += 2;
             while let Some((_, n)) = at(i) {
@@ -120,15 +130,19 @@ fn lex(src: &str) -> (Vec<Tok>, Vec<Diag>) {
                     line += 1;
                     col = 0;
                     i += 1;
+                    clen += 1;
                 } else if n == '*' && at(i + 1).map(|(_, n)| n) == Some('/') {
                     col += 2;
                     i += 2;
+                    clen += 2;
                     break;
                 } else {
                     col += 1;
                     i += 1;
+                    clen += 1;
                 }
             }
+            comment_sems.push(SemToken { role: Role::Comment, line: start_line, col: start_col, len: clen });
             continue;
         }
 
@@ -275,7 +289,7 @@ fn lex(src: &str) -> (Vec<Tok>, Vec<Diag>) {
         toks.push(Tok { kind, text, line: start_line, col: start_col, len });
     }
 
-    (toks, diags)
+    (toks, diags, comment_sems)
 }
 
 fn text1(c: char) -> String { c.to_string() }
@@ -1200,7 +1214,7 @@ fn analyze(uri: &str, text: &str) -> (Vec<Diag>, Vec<SemToken>) {
                     return json_diags(text);
                 }
             }
-            let (toks, lex_diags) = lex(text);
+            let (toks, lex_diags, _lex_sems) = lex(text);
             parse_program(toks, lex_diags, file_mode_for(uri))
         }
         "fmeta" => json_diags(text),
@@ -1482,7 +1496,7 @@ fn main() {
                 let line = msg.pointer("/params/position/line").and_then(|l| l.as_u64()).unwrap_or(0) as usize;
                 let character = msg.pointer("/params/position/character").and_then(|c| c.as_u64()).unwrap_or(0) as usize;
                 let text = documents.get(uri).map(|s| s.as_str()).unwrap_or("");
-                let (toks, _) = lex(text);
+                let (toks, _, _) = lex(text);
                 let items = completions_for(line, character, &toks, file_mode_for(uri));
                 let resp = json!({ "jsonrpc": "2.0", "id": id, "result": { "isIncomplete": false, "items": items } });
                 write_message(&mut writer, &resp);
@@ -1492,7 +1506,7 @@ fn main() {
                 let line = msg.pointer("/params/position/line").and_then(|l| l.as_u64()).unwrap_or(0) as usize;
                 let character = msg.pointer("/params/position/character").and_then(|c| c.as_u64()).unwrap_or(0) as usize;
                 let text = documents.get(uri).map(|s| s.as_str()).unwrap_or("");
-                let (toks, lex_diags) = lex(text);
+                let (toks, lex_diags, _) = lex(text);
                 let (_diags, sems) = parse_program(toks.clone(), lex_diags, file_mode_for(uri));
                 let result = match hover_at(&toks, &sems, line, character, file_mode_for(uri)) {
                     Some(md) => json!({ "contents": { "kind": "markdown", "value": md } }),
@@ -1504,9 +1518,11 @@ fn main() {
             "textDocument/semanticTokens/full" => {
                 let uri = msg.pointer("/params/textDocument/uri").and_then(|u| u.as_str()).unwrap_or("");
                 let text = documents.get(uri).map(|s| s.as_str()).unwrap_or("");
-                let (toks, lex_diags) = lex(text);
-                let (_diags, sems) = parse_program(toks, lex_diags, file_mode_for(uri));
-                let data = encode_semantic_tokens(&sems);
+                let (toks, lex_diags, mut lex_sems) = lex(text);
+                let (_diags, mut sems) = parse_program(toks, lex_diags, file_mode_for(uri));
+                lex_sems.append(&mut sems);
+                lex_sems.sort_by_key(|s| (s.line, s.col));
+                let data = encode_semantic_tokens(&lex_sems);
                 let resp = json!({ "jsonrpc": "2.0", "id": id, "result": { "data": data } });
                 write_message(&mut writer, &resp);
             }
