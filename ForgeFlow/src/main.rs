@@ -823,7 +823,27 @@ impl Parser {
 
     // ── expressions ──
     fn parse_expr(&mut self) {
+        self.parse_logical();
+    }
+
+    /// Lowest-precedence binary level (SPEC.md §7: "Logical: && ||"). Was
+    /// previously missing entirely — `parse_expr` called `parse_comparison`
+    /// directly, so `&&`/`||` (already lexed as `Kind::Op`, see the `'&'`/
+    /// `'|'` arms in `lex`) were never consumed by the expression parser.
+    /// Any expression using them (e.g. `c > 20 && !false` from
+    /// examples.md's `reken()`) parsed only up to the comparison, then
+    /// cascaded into spurious diagnostics on the unconsumed `&&`/`||` and
+    /// everything after it.
+    fn parse_logical(&mut self) {
         self.parse_comparison();
+        while let Some(t) = self.peek() {
+            if t.kind == Kind::Op && matches!(t.text.as_str(), "&&" | "||") {
+                self.bump_as(Role::Operator);
+                self.parse_comparison();
+            } else {
+                break;
+            }
+        }
     }
 
     /// Parses an expression with constructor-literal parsing re-enabled,
