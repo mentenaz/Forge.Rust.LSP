@@ -199,10 +199,24 @@ fn lex(src: &str) -> (Vec<Tok>, Vec<Diag>) {
             let start_line = line;
             let start_col = col;
             let mut s = String::new();
+            let mut seen_dot = false;
+            let mut seen_exp = false;
             while let Some((_, k)) = at(i) {
-                if k.is_ascii_digit() || k == '.' || k == '-' || k == '+' || k == 'e' || k == 'E' {
+                let is_digit = k.is_ascii_digit();
+                let is_dot = k == '.' && !seen_dot && !seen_exp;
+                let is_exp = (k == 'e' || k == 'E') && !seen_exp;
+                let is_sign = (k == '-' || k == '+')
+                    && seen_exp
+                    && s.ends_with(|c| c == 'e' || c == 'E');
+                if is_digit || is_dot || is_exp || is_sign {
+                    if is_dot {
+                        seen_dot = true;
+                    }
+                    if is_exp {
+                        seen_exp = true;
+                    }
                     col += 1;
-                    s.push(chars[i].1);
+                    s.push(k);
                     i += 1;
                 } else {
                     break;
