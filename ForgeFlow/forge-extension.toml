@@ -1,0 +1,14 @@
+id = "forgeflow"
+name = "ForgeFlow"
+description = "ForgeFlow DSL language support: parser diagnostics, semantic highlighting, hover docs, and completion for .fwrk/.fdgn/.fmeta/.forge workflow files."
+version = "0.1.0"
+schema_version = 1
+authors = ["Mentenaz"]
+
+[language]
+language_id = "forgeflow"
+file_extensions = ["fwrk", "fdgn", "fmeta", "forge"]
+
+[language_server]
+binary = "forge-lsp-forgeflow"
+args = []

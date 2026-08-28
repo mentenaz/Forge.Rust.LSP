@@ -191,6 +191,46 @@
       }
     }
   },
+  "forgeflow": {
+    "name": "ForgeFlow",
+    "description": "ForgeFlow DSL language support: parser diagnostics, semantic highlighting, hover docs, and completion for .fwrk/.fdgn/.fmeta/.forge workflow files.",
+    "version": "0.1.0",
+    "repo": "mentenaz/Forge.Rust.LSP",
+    "language_id": "forgeflow",
+    "file_extensions": [
+      "fwrk",
+      "fdgn",
+      "fmeta",
+      "forge"
+    ],
+    "args": [],
+    "assets": {
+      "linux-aarch64": {
+        "archive": "forge-lsp-forgeflow-linux-aarch64.zip",
+        "binary": "forge-lsp-forgeflow"
+      },
+      "linux-x86_64": {
+        "archive": "forge-lsp-forgeflow-linux-x86_64.zip",
+        "binary": "forge-lsp-forgeflow"
+      },
+      "macos-aarch64": {
+        "archive": "forge-lsp-forgeflow-macos-aarch64.zip",
+        "binary": "forge-lsp-forgeflow"
+      },
+      "macos-x86_64": {
+        "archive": "forge-lsp-forgeflow-macos-x86_64.zip",
+        "binary": "forge-lsp-forgeflow"
+      },
+      "windows-aarch64": {
+        "archive": "forge-lsp-forgeflow-windows-aarch64.zip",
+        "binary": "forge-lsp-forgeflow.exe"
+      },
+      "windows-x86_64": {
+        "archive": "forge-lsp-forgeflow-windows-x86_64.zip",
+        "binary": "forge-lsp-forgeflow.exe"
+      }
+    }
+  },
   "go": {
     "name": "Go",
     "description": "Go language support for Forge: gopls. Requires gopls on PATH (installed via the Go toolchain).",
