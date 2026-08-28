@@ -1093,6 +1093,68 @@ fn builtin_doc(name: &str) -> Option<&'static str> {
     builtin_actions().iter().find(|(n, _)| *n == name).map(|(_, d)| *d)
 }
 
+/// Detailed hover docs for ForgeFlow keywords, control-flow words, type
+/// primitives and literals. Mirrors the lexer's `KEYWORDS` / `TYPE_KW` /
+/// `LIT_KW` sets (lines ~74-79).
+fn keyword_doc(name: &str) -> Option<&'static str> {
+    let m: &[(&str, &str)] = &[
+        ("gbk", "Imports a flow or function module so its steps can be reused. Form: `gbk <naam>` or `gbk vannaf \"<pad>\"`."),
+        ("vannaf", "Means \"from\". Supplies the source module/path for an import: `gbk vannaf \"<pad>\"`."),
+        ("flow", "Defines a flow/function — the top-level unit of work. `flow <naam> { ... }`. A flow contains steps (`step`) and control flow (`as` / `terwyl` / `elk`)."),
+        ("soort", "Defines a type/interface (struct). `soort <naam> { veld lyn }`."),
+        ("laat", "Declares a variable. `laat <naam> <tipe> = <uitdrukking>`."),
+        ("step", "A single action step inside a flow. `step <action> <param>=<waarde> ...` (e.g. `step http url=...`). Hover the action name for its parameters."),
+        ("gee", "Returns a value and exits the current flow. `gee <uitdrukking>`."),
+        ("as", "If. Branches the flow: `as <voorwaarde> { ... } anders { ... }`."),
+        ("anders", "Else. The alternative branch of an `as` (if) statement."),
+        ("terwyl", "While. Repeats the block while a condition holds: `terwyl <voorwaarde> { ... }`."),
+        ("elk", "Each / for-each. Iterates over a list: `elk <item> in <lys> { ... }`."),
+        ("node", "Declares a node in a flow graph (.fdgn). `node <naam> action=<step> <param>=<waarde> ...`."),
+        ("edge", "Connects two nodes in a flow graph (.fdgn). `edge <a> -> <b>`."),
+        ("lyn", "String type — a sequence of characters."),
+        ("nmr", "Number type — an integer or floating-point value."),
+        ("vraag", "Boolean type — `waar` (true) or `onwaar` (false)."),
+        ("objk", "Object type — a key/value map."),
+        ("lys", "List type — an ordered collection."),
+        ("enige", "Any type — accepts a value of any type."),
+        ("leeg", "Null/empty type — the absence of a value."),
+        ("waar", "Boolean literal — true."),
+        ("onwaar", "Boolean literal — false."),
+        ("niks", "Null literal — no value."),
+    ];
+    m.iter().find(|(n, _)| *n == name).map(|(_, d)| *d)
+}
+
+/// Detailed hover docs for the well-known built-in action parameters. These
+/// names appear as `property` role tokens inside `step` calls.
+fn property_doc(name: &str) -> Option<&'static str> {
+    let m: &[(&str, &str)] = &[
+        ("method", "HTTP method for the request (GET, POST, PUT, DELETE, …)."),
+        ("url", "Target URL of the HTTP request."),
+        ("headers", "Request headers, as a key/value object."),
+        ("body", "Request body payload."),
+        ("path", "File path to read or write."),
+        ("content", "File contents to write."),
+        ("mode", "File open mode (e.g. `write`, `append`, `read`)."),
+        ("ms", "Delay duration in milliseconds."),
+        ("when", "Predicate that guards a `condition` branch."),
+        ("times", "Number of repetitions for a `loop`."),
+        ("to", "Email recipient address."),
+        ("subject", "Email subject line."),
+        ("query", "SQL / query string to execute."),
+        ("connection", "Database connection identifier."),
+        ("lang", "Script language (e.g. `bash`, `pwsh`, `python`)."),
+        ("code", "Script source to execute."),
+        ("expr", "Transformation expression."),
+        ("channel", "Notification channel / recipient."),
+        ("message", "Notification or email body text."),
+        ("level", "Log severity (e.g. `info`, `warn`, `error`)."),
+        ("text", "Log message text."),
+        ("id", "Item / process identifier."),
+    ];
+    m.iter().find(|(n, _)| *n == name).map(|(_, d)| *d)
+}
+
 // ── Analysis dispatch by extension ───────────────────────────────────────────
 
 fn analyze(uri: &str, text: &str) -> (Vec<Diag>, Vec<SemToken>) {
@@ -1240,25 +1302,49 @@ fn completions_for(line: usize, character: usize, toks: &[Tok], mode: FileMode) 
 fn hover_at(toks: &[Tok], sems: &[SemToken], line: usize, character: usize, mode: FileMode) -> Option<String> {
     for s in sems {
         if s.line == line && character >= s.col && character <= s.col + s.len {
+            let name = toks
+                .iter()
+                .find(|t| t.line == s.line && t.col == s.col)
+                .map(|t| t.text.clone())
+                .unwrap_or_default();
             match s.role {
                 Role::Function => {
-                    let name = toks
-                        .iter()
-                        .find(|t| t.line == s.line && t.col == s.col && t.kind == Kind::Ident)
-                        .map(|t| t.text.clone())
-                        .unwrap_or_default();
                     if let Some(doc) = builtin_doc(&name) {
-                        return Some(format!("**{name}** - built-in action\n\n{doc}"));
+                        return Some(format!("**{name}** — built-in action\n\n{doc}"));
                     }
                     return Some(match mode {
-                        FileMode::Fdgn => format!("**{name}** - node"),
-                        FileMode::Fwrk => format!("**{name}** - flow/function"),
+                        FileMode::Fdgn => format!("**{name}** — node"),
+                        FileMode::Fwrk => format!("**{name}** — flow/function"),
                     });
                 }
-                Role::Type => return Some("Type".into()),
-                Role::Control => return Some("Control flow keyword".into()),
-                Role::Keyword => return Some("ForgeFlow keyword".into()),
-                Role::Property => return Some("Parameter / field name".into()),
+                // Non-function roles: resolve docs from the combined registry.
+                // The parser reports action names (e.g. `http` after `step`)
+                // under the property role and action params (e.g. `url`)
+                // under the type role, so try every source regardless of role.
+                Role::Control | Role::Keyword | Role::Type | Role::Bool | Role::Property => {
+                    if let Some(doc) = builtin_doc(&name) {
+                        return Some(format!("**{name}** — built-in action\n\n{doc}"));
+                    }
+                    if let Some(doc) = keyword_doc(&name) {
+                        let label = match s.role {
+                            Role::Control => "control-flow keyword",
+                            Role::Type => "type",
+                            Role::Bool => "literal",
+                            _ => "keyword",
+                        };
+                        return Some(format!("**{name}** — {label}\n\n{doc}"));
+                    }
+                    if let Some(doc) = property_doc(&name) {
+                        return Some(format!("**{name}** — parameter\n\n{doc}"));
+                    }
+                    return Some(match s.role {
+                        Role::Control => "Control-flow keyword".into(),
+                        Role::Type => "Type".into(),
+                        Role::Bool => "Boolean / null literal".into(),
+                        Role::Property => "Parameter / field name".into(),
+                        _ => "ForgeFlow keyword".into(),
+                    });
+                }
                 _ => {}
             }
         }
