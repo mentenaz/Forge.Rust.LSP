@@ -1,30 +1,36 @@
----
+# ForgeFlow Language Server
 
-## 📘 README.md
+ForgeFlow DSL support for Forge: real parser diagnostics, semantic highlighting,
+hover docs, and completion for `.fwrk` / `.fdgn` / `.fmeta` / `.forge` workflow
+files.
 
-````markdown
-# Forge.Rust.LSP
+This is a **hand-rolled Rust LSP** (not a proxy wrapper): the grammar, parser,
+and editor features live entirely in `src/main.rs`. It speaks LSP 3.16 over
+stdio with `Content-Length` framing — the mirror image of Forge's LSP client.
 
-ForgeFlow Language Server implemented in Rust. Provides editor support for Forge workflow files (`.fdgn`, `.forge`, `.fmeta`, `.fwrk`) via the Language Server Protocol.
+## Files
+
+- `src/main.rs` — the server (framing, lexer, parser, LSP handlers)
+- `SPEC.md` — the language spec (grammar, file extensions, `.fmeta` schema)
+- `BuildOrder.md` — the phased build plan (phases 1–3, 5 implemented here)
+- `usage.md` — **how to use it and how to implement / wire it up**
+- `forge-extension.toml` — package metadata consumed by the registry
 
 ## Features
 
-- Syntax highlighting for ForgeFlow DSL
-- Autocompletion of actions and parameters
-- Hover documentation for built-in actions
-- Diagnostics for invalid syntax
-- Integration with Forge runtime
-- Support for multiple file types:
-  - `.forge` → binary project container
-  - `.fdgn` → graph/workflow files
-  - `.fmeta` → metadata/config (plaintext + optional encrypted fields)
-  - `.fwrk` → workflow chain DSL
+- Syntax diagnostics for the `flow`/`step`/`param` DSL (`.fwrk`, `.fdgn`)
+- JSON validation for `.fmeta`/`.fdgn`, with warnings on `ENC:` secret fields
+- Hover docs for built-in actions, completion for keywords + actions
+- Semantic tokens mapped to the Forge theme's `syntax` keys (see `usage.md` §4)
+- `.forge` binary containers are surfaced as an informational note
 
-## Getting Started
+## Build & test
 
-1. Clone the repo:
-   ```bash
-   git clone https://github.com/mentenaz/Forge.Rust.LSP
-   cd Forge.Rust.LSP
-   ```
-````
+```sh
+cargo build --release -p forge-lsp-forgeflow
+cargo run --release -p forge-registry-gen        # refresh the registry index
+```
+
+Forge picks the package up automatically via `forge-registry.json` — no app
+update required. See [`usage.md`](./usage.md) for full usage, extension points,
+and consumer-wiring details.

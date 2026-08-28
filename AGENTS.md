@@ -22,9 +22,14 @@ printf 'Content-Length: 75\r\n\r\n{"jsonrpc":"2.0","id":1,"method":"initialize",
 
 ## Package anatomy
 
-- Two styles:
+- Three styles:
   - `Json/` — hand-rolled LSP over stdio (`Content-Length` framing). Reference implementation for
     framing, initialize handshake, and publishDiagnostics; copy its patterns for new servers.
+  - `ForgeFlow/` — also hand-rolled Rust, but **parser-driven**: it implements the ForgeFlow DSL
+    in Rust (lexer + recursive-descent parser + semantic tokens), not a proxy. Use it as the
+    reference when a language needs real language intelligence rather than wrapping an existing
+    engine. Its `usage.md` documents the architecture, extension points, and how the Forge app
+    consumes it (including the still-open semantic-token rendering step).
   - Everything else — thin stdio proxies built on the shared `common/` crate (`forge-lsp-proxy`):
     describe the upstream engine in an `EngineSpec` (repo, pinned tag, per-platform asset map,
     PATH-first candidates) and call `forge_lsp_proxy::run()`. The shared runner probes `PATH`
