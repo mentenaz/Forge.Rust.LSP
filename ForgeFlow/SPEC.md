@@ -36,17 +36,26 @@ gbk      vannaf     soort      flow       step
 laat     as         anders     terwyl     gee
 lyn      nmr        vraag      objk       lys
 enige    leeg       elk        waar       onwaar    niks
+node     edge
 ```
 
 > Design note: `flow` and `step` are intentionally English (stable engine API
 > names). All other keywords are Afrikaans-rooted. Type keywords (`lyn`, `nmr`,
 > `vraag`, `objk`, `lys`, `enige`, `leeg`) double as the built-in type names and
-> are therefore reserved everywhere.
+> are therefore reserved everywhere. `node` and `edge` are also English —
+> they're `.fdgn`-only structural keywords (§10), kept consistent with `flow`/
+> `step` as stable engine-facing names rather than Afrikaans-rooted like the
+> general-purpose control keywords.
 
 `true` / `false` are accepted as aliases for `waar` / `onwaar`.
 
+Field names inside a `node { }` block (`title`, `action`, `pos` — see §10) are
+**not** reserved; they're ordinary identifiers recognized by position, the
+same way `soort User = { naam: lyn }`'s `naam` is an ordinary field name, not
+a keyword.
+
 ### Operators & punctuation
-Operators: `+ - * / == != < > <= >= && || ! =>`
+Operators: `+ - * / == != < > <= >= && || ! => ->`
 Punctuation: `{ } ( ) [ ] . , ; : ? =`
 
 `<` and `>` are punctuation tokens (also used for generics), but participate in
@@ -71,6 +80,14 @@ gbk Tools vannaf "./tools.fwrk"
 ```
 Imports a named binding from a path relative to the current file. Only named
 imports are supported (no glob/wildcard).
+
+A brace-delimited list imports several named bindings from the same path in
+one statement:
+```
+gbk { Tools, Utils } vannaf "./shared.fwrk"
+```
+Equivalent to one `gbk <name> vannaf "<path>"` per listed name. Both forms
+are valid in `.fwrk` and `.fdgn` (§10).
 
 ### Type / interface declaration
 Alias form:
@@ -236,3 +253,101 @@ theme `syntax` keys, so no theme change is required):
 
 `.fmeta` files are validated as JSON (with an `ENC:` encrypted-field lint).
 `.forge` files are treated as binary containers and are not parsed as text.
+
+---
+
+## 10. `.fdgn` graph files
+
+`.fdgn` files are a **deliberately narrower grammar than `.fwrk`** — a flat,
+declarative graph of nodes and edges, not a general program. There is no
+`flow`, `step`, `soort`, `laat`, control flow, or arbitrary expressions.
+This is the native format the Forge Designer panel reads and writes; it is
+not meant to be a second general-purpose language, just enough structure to
+describe a node graph as text.
+
+### Top-level structure
+
+A `.fdgn` file is an ordered list of the following items, newline-separated:
+
+1. **Import** — `gbk <name> vannaf "<path>"` (single) or
+   `gbk { <name>, <name>, ... } vannaf "<path>"` (list). Both forms are also
+   valid in `.fwrk`; the list form is new but shared across both file kinds
+   rather than being `.fdgn`-specific, so a `.fwrk` file that wants to import
+   several functions from one path doesn't need one `gbk` line each.
+2. **Node** — `node <name> { ... }`
+3. **Edge** — `edge <name> -> <name>`
+
+Any `flow`/`step`/`soort`/`laat`/`as`/`terwyl`/`gee` item at the top level of
+a `.fdgn` file is a **structural error** — the language server reports it as
+an unexpected top-level item, the same way an unexpected `}` is reported in
+`.fwrk` today.
+
+### Node
+
+```
+node fetchData {
+    title = "Fetch Data"
+    action = http(method = "GET", url = "https://api.forge.dev/v1/build")
+    pos = [80, 80]
+}
+```
+
+- `<name>` is the node's identifier, referenced by `edge` declarations.
+- `title` — a string literal, the node's display label.
+- `action` — a call expression, `<name>(<arg> = <expr>, ...)`. `<name>` may
+  be a built-in action (§ `builtin_actions()` in the server) or a name
+  brought in via `gbk`; the language server does not distinguish or
+  validate which — same "structure only" policy as everywhere else in this
+  spec. Arguments follow the exact same `name = value` convention as
+  `step`'s arguments (§6) — one calling convention for the whole language.
+- `pos` — a 2-element list literal, `[x, y]`, reusing the existing list
+  grammar (§7) rather than introducing a tuple type. The node's canvas
+  position.
+
+All three fields are optional at the grammar level (a node with no `action`
+is structurally valid, just not runnable) but `title` and `action` are
+expected to be present in practice; the language server does not currently
+enforce this.
+
+### Edge
+
+```
+edge fetchData -> wait
+```
+
+A standalone declaration connecting two node names by identifier. Order is
+source `->` target. The language server does not validate that either name
+resolves to a declared `node` in the file (no cross-reference checking yet,
+matching this document's opening note that scope resolution isn't
+enforced).
+
+### Example
+
+```
+gbk { http, delay } vannaf "./actions.fwrk"
+
+node fetchData {
+    title = "Fetch Data"
+    action = http(method = "GET", url = "https://api.forge.dev/v1/build")
+    pos = [80, 80]
+}
+
+node wait {
+    title = "Wait"
+    action = delay(ms = 500)
+    pos = [300, 80]
+}
+
+edge fetchData -> wait
+```
+
+### Semantic token roles
+
+| Element | Role |
+| --- | --- |
+| `node`, `edge`, `gbk`, `vannaf` | `keyword` |
+| Node declaration name, edge endpoint references | `function` (same role `flow` declarations and call sites use) |
+| `title`, `action`, `pos` | `property` |
+| Action call target (e.g. `http`) | `function` |
+| `->` | `operator` |
+| String / number literals | `string` / `number` |

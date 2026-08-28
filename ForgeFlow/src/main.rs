@@ -73,6 +73,7 @@ struct Tok {
 
 const KEYWORDS: &[&str] = &[
     "gbk", "vannaf", "flow", "soort", "laat", "step", "gee", "as", "anders", "terwyl", "elk",
+    "node", "edge",
 ];
 const TYPE_KW: &[&str] = &["lyn", "nmr", "vraag", "objk", "lys", "enige", "leeg"];
 const LIT_KW: &[&str] = &["waar", "onwaar", "niks"];
@@ -242,7 +243,11 @@ fn lex(src: &str) -> (Vec<Tok>, Vec<Diag>) {
                 if next == Some('=') { (text2(">="), Kind::Op) }
                 else { (text1('>'), Kind::Punct) }
             }
-            '+' | '-' | '*' | '/' => (text1(c), Kind::Op),
+            '-' => {
+                if next == Some('>') { (text2("->"), Kind::Punct) }
+                else { (text1('-'), Kind::Op) }
+            }
+            '+' | '*' | '/' => (text1(c), Kind::Op),
             '{' | '}' | '(' | ')' | '[' | ']' | '?' | '.' | ',' | ';' | ':' => (text1(c), Kind::Punct),
             _ => (text1(c), Kind::Unknown),
         };
@@ -322,11 +327,27 @@ fn kw_role(s: &str) -> Role {
     }
 }
 
+/// Which top-level grammar a file is parsed against (SPEC.md §10). `.fdgn`
+/// is a deliberately narrower grammar than `.fwrk` — imports/node/edge only,
+/// no flow/step/soort/laat/control-flow — not a second general-purpose
+/// language.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum FileMode {
+    Fwrk,
+    Fdgn,
+}
+
+fn file_mode_for(uri: &str) -> FileMode {
+    let ext = uri.rsplit('.').next().unwrap_or("").to_ascii_lowercase();
+    if ext == "fdgn" { FileMode::Fdgn } else { FileMode::Fwrk }
+}
+
 struct Parser {
     toks: Vec<Tok>,
     pos: usize,
     diags: Vec<Diag>,
     sems: Vec<SemToken>,
+    mode: FileMode,
 }
 
 impl Parser {
@@ -394,6 +415,13 @@ impl Parser {
 
     // ── top level ──
     fn run(&mut self) {
+        match self.mode {
+            FileMode::Fwrk => self.run_fwrk(),
+            FileMode::Fdgn => self.run_fdgn(),
+        }
+    }
+
+    fn run_fwrk(&mut self) {
         while !self.at_end() {
             if self.is_kw("gbk") {
                 self.parse_import();
@@ -411,9 +439,55 @@ impl Parser {
         }
     }
 
+    /// `.fdgn` top level (SPEC.md §10): imports, `node`, `edge` only.
+    fn run_fdgn(&mut self) {
+        while !self.at_end() {
+            if self.is_kw("gbk") {
+                self.parse_import();
+            } else if self.is_kw("node") {
+                self.parse_node();
+            } else if self.is_kw("edge") {
+                self.parse_edge();
+            } else if self.is_punct("}") {
+                self.err_here("unexpected `}`");
+                self.bump();
+            } else if self.is_kw("flow") || self.is_kw("soort") || self.is_kw("step") || self.is_kw("laat") {
+                self.err_here(&format!(
+                    "`{}` is not valid in a .fdgn file — .fdgn only supports imports, node, and edge (see SPEC.md \u{a7}10)",
+                    self.cur_text()
+                ));
+                self.bump();
+            } else {
+                self.err_here("expected import, node, or edge at top level");
+                self.bump();
+            }
+        }
+    }
+
+    /// `gbk <name> vannaf "<path>"` or `gbk { <name>, <name>, ... } vannaf
+    /// "<path>"` (SPEC.md §2) — both forms valid in `.fwrk` and `.fdgn`.
     fn parse_import(&mut self) {
         self.bump_kw("gbk"); // gbk
-        if let Some(t) = self.peek() {
+        if self.is_punct("{") {
+            self.bump_punct("{");
+            loop {
+                if let Some(t) = self.peek() {
+                    if t.kind == Kind::Ident {
+                        self.bump_as(Role::Variable);
+                    } else {
+                        self.err_here("expected imported name");
+                        self.bump();
+                        continue;
+                    }
+                }
+                if self.is_punct(",") {
+                    self.bump();
+                    continue;
+                }
+                break;
+            }
+            self.bump_punct("}");
+        } else if let Some(t) = self.peek() {
             if t.kind == Kind::Ident {
                 self.bump_as(Role::Variable);
             } else {
@@ -506,6 +580,77 @@ impl Parser {
         }
         self.bump_punct("{");
         self.parse_block();
+    }
+
+    // ── .fdgn: node / edge (SPEC.md §10) ──
+
+    /// `node <name> { <field> = <expr> (newline|`,`)* }`. Field names
+    /// (`title`, `action`, `pos`, ...) are ordinary identifiers, not
+    /// reserved — the parser doesn't special-case which fields appear.
+    fn parse_node(&mut self) {
+        self.bump_kw("node"); // node
+        if let Some(t) = self.peek() {
+            if t.kind == Kind::Ident {
+                self.bump_as(Role::Function);
+            } else {
+                self.err_here("expected node name");
+            }
+        }
+        self.bump_punct("{");
+        loop {
+            while self.is_punct(";") {
+                self.bump();
+            }
+            if self.at_end() || self.is_punct("}") {
+                break;
+            }
+            let start_line = self.peek().map(|t| t.line).unwrap_or(0);
+            if let Some(t) = self.peek() {
+                if t.kind == Kind::Ident {
+                    self.bump_as(Role::Property);
+                } else {
+                    self.err_here("expected field name (e.g. `title`, `action`, `pos`)");
+                    self.bump();
+                    continue;
+                }
+            }
+            self.bump_punct("=");
+            self.parse_expr();
+            if self.is_punct(",") {
+                self.bump();
+                continue;
+            }
+            if self.at_end() || self.is_punct("}") {
+                break;
+            }
+            if self.peek().map(|t| t.line).unwrap_or(0) > start_line {
+                continue;
+            }
+            self.err_here("expected newline or `,` between node fields");
+        }
+        self.bump_punct("}");
+    }
+
+    /// `edge <name> -> <name>`. Endpoint names are not cross-referenced
+    /// against declared `node`s (structure only, matching this server's
+    /// policy everywhere else).
+    fn parse_edge(&mut self) {
+        self.bump_kw("edge"); // edge
+        if let Some(t) = self.peek() {
+            if t.kind == Kind::Ident {
+                self.bump_as(Role::Function);
+            } else {
+                self.err_here("expected source node name");
+            }
+        }
+        self.bump_punct("->");
+        if let Some(t) = self.peek() {
+            if t.kind == Kind::Ident {
+                self.bump_as(Role::Function);
+            } else {
+                self.err_here("expected target node name");
+            }
+        }
     }
 
     // ── blocks / statements ──
@@ -883,8 +1028,8 @@ impl Parser {
     }
 }
 
-fn parse_program(toks: Vec<Tok>, lex_diags: Vec<Diag>) -> (Vec<Diag>, Vec<SemToken>) {
-    let mut p = Parser { toks, pos: 0, diags: lex_diags, sems: Vec::new() };
+fn parse_program(toks: Vec<Tok>, lex_diags: Vec<Diag>, mode: FileMode) -> (Vec<Diag>, Vec<SemToken>) {
+    let mut p = Parser { toks, pos: 0, diags: lex_diags, sems: Vec::new(), mode };
     p.run();
     (p.diags, p.sems)
 }
@@ -926,7 +1071,7 @@ fn analyze(uri: &str, text: &str) -> (Vec<Diag>, Vec<SemToken>) {
                 }
             }
             let (toks, lex_diags) = lex(text);
-            parse_program(toks, lex_diags)
+            parse_program(toks, lex_diags, file_mode_for(uri))
         }
         "fmeta" => json_diags(text),
         "forge" => (
@@ -991,7 +1136,7 @@ fn diag_to_json(d: &Diag) -> Value {
 
 // ── Completion ───────────────────────────────────────────────────────────────
 
-fn completions_for(line: usize, character: usize, toks: &[Tok]) -> Vec<Value> {
+fn completions_for(line: usize, character: usize, toks: &[Tok], mode: FileMode) -> Vec<Value> {
     let mut prev: Option<&Tok> = None;
     for t in toks {
         if t.line > line || (t.line == line && t.col + t.len > character) {
@@ -1007,25 +1152,40 @@ fn completions_for(line: usize, character: usize, toks: &[Tok]) -> Vec<Value> {
         items.push(json!({ "label": label, "kind": kind, "detail": detail }));
     };
 
-    match prev {
-        None => {
+    match (mode, prev) {
+        (FileMode::Fdgn, None) => {
+            for (l, d) in [("gbk", "import functions"), ("node", "declare a node"), ("edge", "connect two nodes")] {
+                add(&mut items, l, 14, d);
+            }
+        }
+        (FileMode::Fdgn, Some(t)) if t.text == "action" => {
+            for (name, doc) in builtin_actions() {
+                add(&mut items, name, 3, doc);
+            }
+        }
+        (FileMode::Fdgn, Some(_)) => {
+            add(&mut items, "gbk", 14, "import functions");
+            add(&mut items, "node", 14, "declare a node");
+            add(&mut items, "edge", 14, "connect two nodes");
+        }
+        (FileMode::Fwrk, None) => {
             for (l, d) in [("gbk", "import a flow"), ("soort", "define a type/interface"), ("flow", "define a flow/function"), ("laat", "declare a variable")] {
                 add(&mut items, l, 14, d);
             }
         }
-        Some(t) if t.text == "laat" => {
+        (FileMode::Fwrk, Some(t)) if t.text == "laat" => {
             add(&mut items, "lyn", 7, "string");
             add(&mut items, "nmr", 7, "number");
             add(&mut items, "vraag", 7, "boolean");
             add(&mut items, "objk", 7, "object");
             add(&mut items, "lys", 7, "list");
         }
-        Some(t) if t.text == "step" => {
+        (FileMode::Fwrk, Some(t)) if t.text == "step" => {
             for (name, doc) in builtin_actions() {
                 add(&mut items, name, 3, doc);
             }
         }
-        Some(_) => {
+        (FileMode::Fwrk, Some(_)) => {
             add(&mut items, "gbk", 14, "import a flow");
             add(&mut items, "soort", 14, "define a type/interface");
             add(&mut items, "flow", 14, "define a flow/function");
@@ -1043,7 +1203,7 @@ fn completions_for(line: usize, character: usize, toks: &[Tok]) -> Vec<Value> {
 
 // ── Hover ────────────────────────────────────────────────────────────────────
 
-fn hover_at(toks: &[Tok], sems: &[SemToken], line: usize, character: usize) -> Option<String> {
+fn hover_at(toks: &[Tok], sems: &[SemToken], line: usize, character: usize, mode: FileMode) -> Option<String> {
     for s in sems {
         if s.line == line && character >= s.col && character <= s.col + s.len {
             match s.role {
@@ -1056,7 +1216,10 @@ fn hover_at(toks: &[Tok], sems: &[SemToken], line: usize, character: usize) -> O
                     if let Some(doc) = builtin_doc(&name) {
                         return Some(format!("**{name}** - built-in action\n\n{doc}"));
                     }
-                    return Some(format!("**{name}** - flow/function"));
+                    return Some(match mode {
+                        FileMode::Fdgn => format!("**{name}** - node"),
+                        FileMode::Fwrk => format!("**{name}** - flow/function"),
+                    });
                 }
                 Role::Type => return Some("Type".into()),
                 Role::Control => return Some("Control flow keyword".into()),
@@ -1166,7 +1329,7 @@ fn main() {
                 let character = msg.pointer("/params/position/character").and_then(|c| c.as_u64()).unwrap_or(0) as usize;
                 let text = documents.get(uri).map(|s| s.as_str()).unwrap_or("");
                 let (toks, _) = lex(text);
-                let items = completions_for(line, character, &toks);
+                let items = completions_for(line, character, &toks, file_mode_for(uri));
                 let resp = json!({ "jsonrpc": "2.0", "id": id, "result": { "isIncomplete": false, "items": items } });
                 write_message(&mut writer, &resp);
             }
@@ -1176,8 +1339,8 @@ fn main() {
                 let character = msg.pointer("/params/position/character").and_then(|c| c.as_u64()).unwrap_or(0) as usize;
                 let text = documents.get(uri).map(|s| s.as_str()).unwrap_or("");
                 let (toks, lex_diags) = lex(text);
-                let (_diags, sems) = parse_program(toks.clone(), lex_diags);
-                let result = match hover_at(&toks, &sems, line, character) {
+                let (_diags, sems) = parse_program(toks.clone(), lex_diags, file_mode_for(uri));
+                let result = match hover_at(&toks, &sems, line, character, file_mode_for(uri)) {
                     Some(md) => json!({ "contents": { "kind": "markdown", "value": md } }),
                     None => Value::Null,
                 };
@@ -1188,7 +1351,7 @@ fn main() {
                 let uri = msg.pointer("/params/textDocument/uri").and_then(|u| u.as_str()).unwrap_or("");
                 let text = documents.get(uri).map(|s| s.as_str()).unwrap_or("");
                 let (toks, lex_diags) = lex(text);
-                let (_diags, sems) = parse_program(toks, lex_diags);
+                let (_diags, sems) = parse_program(toks, lex_diags, file_mode_for(uri));
                 let data = encode_semantic_tokens(&sems);
                 let resp = json!({ "jsonrpc": "2.0", "id": id, "result": { "data": data } });
                 write_message(&mut writer, &resp);
