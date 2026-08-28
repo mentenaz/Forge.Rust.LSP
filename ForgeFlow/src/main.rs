@@ -348,6 +348,16 @@ struct Parser {
     diags: Vec<Diag>,
     sems: Vec<SemToken>,
     mode: FileMode,
+    /// Suppresses `Ident { ... }` constructor-literal parsing while set.
+    /// Set while parsing a `terwyl`/`as` condition, whose trailing `{`
+    /// would otherwise be ambiguous with a constructor literal ending the
+    /// condition (`terwyl x < retries { ... }` — is `retries {` a
+    /// constructor, or is `{` the loop body?). Cleared whenever we
+    /// descend into a delimited sub-expression (parens, brackets, call
+    /// arguments, object-literal field values) where the ambiguity can't
+    /// occur, so constructors still work there — same rule Go and Rust use
+    /// for composite/struct literals in `if`/`for` conditions.
+    no_brace_ctor: bool,
 }
 
 impl Parser {
@@ -772,7 +782,7 @@ impl Parser {
 
     fn parse_if(&mut self) {
         self.bump_kw("as");
-        self.parse_expr();
+        self.parse_condition();
         self.bump_punct("{");
         self.parse_block();
         if self.is_kw("anders") {
@@ -784,9 +794,20 @@ impl Parser {
 
     fn parse_while(&mut self) {
         self.bump_kw("terwyl");
-        self.parse_expr();
+        self.parse_condition();
         self.bump_punct("{");
         self.parse_block();
+    }
+
+    /// Parses a `terwyl`/`as` condition with constructor-literal parsing
+    /// suppressed at the top level (see `no_brace_ctor`), so a trailing
+    /// bare identifier isn't misread as the start of `Ident { ... }` when
+    /// what actually follows is the condition's own block-opening `{`.
+    fn parse_condition(&mut self) {
+        let prev = self.no_brace_ctor;
+        self.no_brace_ctor = true;
+        self.parse_expr();
+        self.no_brace_ctor = prev;
     }
 
     fn parse_return(&mut self) {
@@ -803,6 +824,19 @@ impl Parser {
     // ── expressions ──
     fn parse_expr(&mut self) {
         self.parse_comparison();
+    }
+
+    /// Parses an expression with constructor-literal parsing re-enabled,
+    /// even if called from inside a `terwyl`/`as` condition — for
+    /// positions delimited by their own closing token (`)`, `]`, a call
+    /// argument before `,`/`)`, an object-literal field before `,`/`}`),
+    /// where a trailing `Ident {` can only mean a constructor, never the
+    /// condition's block-opening brace. See `no_brace_ctor`.
+    fn parse_expr_allowing_ctor(&mut self) {
+        let prev = self.no_brace_ctor;
+        self.no_brace_ctor = false;
+        self.parse_expr();
+        self.no_brace_ctor = prev;
     }
 
     fn parse_comparison(&mut self) {
@@ -934,7 +968,7 @@ impl Parser {
                                 }
                             }
                             self.bump_punct("=");
-                            self.parse_expr();
+                            self.parse_expr_allowing_ctor();
                             if self.is_punct(",") {
                                 self.bump();
                                 continue;
@@ -943,7 +977,7 @@ impl Parser {
                         }
                     }
                     self.bump_punct(")");
-                } else if matches!(next, Some(n) if n.kind == Kind::Punct && n.text == "{") {
+                } else if !self.no_brace_ctor && matches!(next, Some(n) if n.kind == Kind::Punct && n.text == "{") {
                     self.bump_as(Role::Type); // constructor
                     self.parse_object_literal();
                 } else {
@@ -952,13 +986,13 @@ impl Parser {
             }
             Kind::Punct if t.text == "(" => {
                 self.bump();
-                self.parse_expr();
+                self.parse_expr_allowing_ctor();
                 self.bump_punct(")");
             }
             Kind::Punct if t.text == "[" => {
                 self.bump();
                 while !self.at_end() && !self.is_punct("]") {
-                    self.parse_expr();
+                    self.parse_expr_allowing_ctor();
                     if self.is_punct(",") {
                         self.bump();
                     } else {
@@ -990,7 +1024,7 @@ impl Parser {
                 }
             }
             self.bump_punct("=");
-            self.parse_expr();
+            self.parse_expr_allowing_ctor();
             if self.is_punct(",") {
                 self.bump();
             } else {
@@ -1029,7 +1063,7 @@ impl Parser {
 }
 
 fn parse_program(toks: Vec<Tok>, lex_diags: Vec<Diag>, mode: FileMode) -> (Vec<Diag>, Vec<SemToken>) {
-    let mut p = Parser { toks, pos: 0, diags: lex_diags, sems: Vec::new(), mode };
+    let mut p = Parser { toks, pos: 0, diags: lex_diags, sems: Vec::new(), mode, no_brace_ctor: false };
     p.run();
     (p.diags, p.sems)
 }

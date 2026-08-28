@@ -194,7 +194,7 @@
   "forgeflow": {
     "name": "ForgeFlow",
     "description": "ForgeFlow DSL language support: parser diagnostics, semantic highlighting, hover docs, and completion for .fwrk/.fdgn/.fmeta/.forge workflow files.",
-    "version": "0.6.0",
+    "version": "0.6.1",
     "repo": "mentenaz/Forge.Rust.LSP",
     "language_id": "forgeflow",
     "file_extensions": [
