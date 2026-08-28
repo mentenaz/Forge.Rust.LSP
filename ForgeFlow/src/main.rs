@@ -409,16 +409,25 @@ fn builtin_doc(name: &str) -> Option<&'static str> {
 
 // ── Semantic tokens ─────────────────────────────────────────────────────────
 
-const SEM_LEGEND: &[&str] = &["keyword", "function", "variable", "string", "number", "boolean"];
+// Token-type names are chosen to match the Forge theme's `syntax` keys
+// (see Forge theme `syntax` block) so the GPUI client can color them
+// directly without any theme changes:
+//   keyword  -> flow/step keywords      (syntax.keyword: #c4b5fd)
+//   function -> step action name         (syntax.function: #d8b4fe)
+//   title    -> flow declaration name    (syntax.title: #c4b5fd bold)
+//   property -> parameter name           (syntax.property: #9333ea)
+//   string/number/boolean -> literal values
+const SEM_LEGEND: &[&str] = &["keyword", "function", "title", "property", "string", "number", "boolean"];
 
 fn role_to_index(role: Role) -> u32 {
     match role {
         Role::Keyword => 0,
         Role::Action => 1,
-        Role::FlowName | Role::Param => 2,
-        Role::Str => 3,
-        Role::Num => 4,
-        Role::Bool => 5,
+        Role::FlowName => 2,
+        Role::Param => 3,
+        Role::Str => 4,
+        Role::Num => 5,
+        Role::Bool => 6,
     }
 }
 
