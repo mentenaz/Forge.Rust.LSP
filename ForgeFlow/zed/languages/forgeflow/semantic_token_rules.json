@@ -1,0 +1,4 @@
+[
+  { "token_type": "control", "style": ["keyword"] },
+  { "token_type": "boolean", "style": ["constant.builtin"] }
+]

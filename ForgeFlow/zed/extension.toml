@@ -1,0 +1,27 @@
+id = "forgeflow"
+name = "ForgeFlow"
+description = "ForgeFlow DSL language support for Zed (Mentenaz Forge): parser diagnostics, semantic highlighting, hover docs, and completion for .fwrk/.fdgn/.fmeta/.forge workflow files."
+version = "0.6.5"
+schema_version = 1
+authors = ["Mentenaz"]
+repository = "https://github.com/Mentenaz-Forge/Forge.Rust.LSP"
+
+# ForgeFlow has no dedicated tree-sitter grammar yet. Zed requires every
+# registered language to name a grammar, so we temporarily reuse the HTML
+# grammar purely to let the language register. Real highlighting comes from
+# the LSP's own semantic tokens — enable them in your Zed settings:
+#   "semantic_tokens": "full"      # LSP tokens only (recommended for ForgeFlow)
+#   "semantic_tokens": "combined"  # LSP tokens layered over tree-sitter
+# Replace [grammars.*] + the `grammar` field in languages/forgeflow/config.toml
+# with a real tree-sitter-forgeflow once one exists.
+[grammars.html]
+repository = "https://github.com/tree-sitter/tree-sitter-html"
+commit = "bfa075d83c6b97cd48440b3829ab8d24a2319809"
+
+# The actual command is produced by the Rust extension in src/lib.rs, which
+# resolves `forge-lsp-forgeflow` from your PATH via `worktree.which`. Build the
+# server with `cargo build --release -p forge-lsp-forgeflow` and put the
+# resulting binary (`forge-lsp-forgeflow` / `.exe`) on your PATH.
+[language_servers.forgeflow]
+name = "ForgeFlow Language Server"
+languages = ["ForgeFlow"]

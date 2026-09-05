@@ -1,0 +1,15 @@
+[package]
+name = "forgeflow"
+version = "0.6.5"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+zed_extension_api = "0.7.0"
+
+# Keep this crate out of the parent Forge.Rust.LSP Cargo workspace so it does
+# not interfere with the LSP binary build.
+[workspace]

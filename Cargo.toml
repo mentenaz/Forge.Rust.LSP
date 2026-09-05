@@ -24,6 +24,9 @@ members = [
     "common",
     "tools/registry-gen",
 ]
+exclude = [
+    "ForgeFlow/zed",
+]
 
 [workspace.package]
 edition = "2021"

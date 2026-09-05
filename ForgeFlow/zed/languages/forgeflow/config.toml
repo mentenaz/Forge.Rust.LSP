@@ -1,0 +1,4 @@
+name = "ForgeFlow"
+grammar = "html"
+path_suffixes = ["fwrk", "fdgn", "fmeta", "forge"]
+line_comments = ["//"]
