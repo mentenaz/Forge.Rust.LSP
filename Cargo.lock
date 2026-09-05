@@ -164,7 +164,7 @@ dependencies = [
 
 [[package]]
 name = "forge-lsp-forgeflow"
-version = "0.6.5"
+version = "0.7.0"
 dependencies = [
  "serde_json",
 ]

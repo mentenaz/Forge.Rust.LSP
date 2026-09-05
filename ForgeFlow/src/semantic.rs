@@ -47,6 +47,8 @@ fn keyword_doc(name: &str) -> Option<&'static str> {
         ("anders", "Else. The alternative branch of an `as` (if) statement."),
         ("terwyl", "While. Repeats the block while a condition holds: `terwyl <voorwaarde> { ... }`."),
         ("elk", "Each / for-each. Iterates over a list: `elk <item> in <lys> { ... }`."),
+        ("tak", "Parallel fork. Runs its `been` branches concurrently: `tak { been <naam> { ... } been <naam> { ... } }`. In a .fdgn graph, `tak <naam> { ... }` instead marks a node as a fork point — its outgoing branches are ordinary `edge` declarations."),
+        ("been", "One named branch of an enclosing `tak`. `been <naam> { ... }`. Only valid inside `tak` in a .fwrk file."),
         ("node", "Declares a node in a flow graph (.fdgn). `node <naam> action=<step> <param>=<waarde> ...`."),
         ("edge", "Connects two nodes in a flow graph (.fdgn). `edge <a> -> <b>`."),
         ("lyn", "String type — a sequence of characters."),
@@ -414,9 +416,9 @@ pub fn completions_for(line: usize, character: usize, toks: &[Tok], mode: FileMo
                 push_item(&mut items, &mut seen, lit, 12, "literal");
             }
             let kw: &[&str] = if mode == FileMode::Fdgn {
-                &["gbk", "node", "edge", "as", "terwyl", "gee", "laat"]
+                &["gbk", "node", "edge", "tak", "as", "terwyl", "gee", "laat"]
             } else {
-                &["gbk", "soort", "flow", "laat", "as", "terwyl", "gee", "elk"]
+                &["gbk", "soort", "flow", "laat", "as", "terwyl", "tak", "gee", "elk"]
             };
             for k in kw {
                 push_item(&mut items, &mut seen, k, 14, "keyword");
@@ -424,9 +426,9 @@ pub fn completions_for(line: usize, character: usize, toks: &[Tok], mode: FileMo
         }
         Ctx::Keyword => {
             let kw: &[&str] = if mode == FileMode::Fdgn {
-                &["gbk", "node", "edge", "anders"]
+                &["gbk", "node", "edge", "tak", "anders"]
             } else {
-                &["gbk", "soort", "flow", "laat", "anders"]
+                &["gbk", "soort", "flow", "laat", "anders", "been"]
             };
             for k in kw {
                 push_item(&mut items, &mut seen, k, 14, "keyword");

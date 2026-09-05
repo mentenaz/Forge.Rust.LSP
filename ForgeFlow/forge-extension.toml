@@ -1,7 +1,7 @@
 id = "forgeflow"
 name = "ForgeFlow"
 description = "ForgeFlow DSL language support: parser diagnostics, semantic highlighting, hover docs, and completion for .fwrk/.fdgn/.fmeta/.forge workflow files."
-version = "0.6.5"
+version = "0.7.0"
 schema_version = 1
 authors = ["Mentenaz"]
 

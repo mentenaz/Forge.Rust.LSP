@@ -6,7 +6,7 @@ use serde_json::{Value, json};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Kind {
-    Kw,     // keyword: gbk vannaf flow soort laat step gee as anders terwyl elk
+    Kw,     // keyword: gbk vannaf flow soort laat step gee as anders terwyl elk tak been
     Type,   // type primitive: lyn nmr vraag objk lys enige leeg
     Lit,    // literal keyword: waar onwaar niks
     Ident,
@@ -29,7 +29,7 @@ pub struct Tok {
 
 const KEYWORDS: &[&str] = &[
     "gbk", "vannaf", "flow", "soort", "laat", "step", "gee", "as", "anders", "terwyl", "elk",
-    "node", "edge",
+    "node", "edge", "tak", "been",
 ];
 pub const TYPE_KW: &[&str] = &["lyn", "nmr", "vraag", "objk", "lys", "enige", "leeg"];
 /// Well-known `.fdgn` node fields (SPEC.md §10). Free-form in the parser but
@@ -311,7 +311,7 @@ fn role_to_index(role: Role) -> u32 {
 
 fn kw_role(s: &str) -> Role {
     match s {
-        "as" | "anders" | "terwyl" => Role::Control,
+        "as" | "anders" | "terwyl" | "tak" | "been" => Role::Control,
         _ => Role::Keyword,
     }
 }
@@ -445,6 +445,8 @@ impl Parser {
                 self.parse_import();
             } else if self.is_kw("node") {
                 self.parse_node();
+            } else if self.is_kw("tak") {
+                self.parse_tak_fdgn();
             } else if self.is_kw("edge") {
                 self.parse_edge();
             } else if self.is_punct("}") {
@@ -595,6 +597,35 @@ impl Parser {
                 self.err_here("expected node name");
             }
         }
+        self.parse_field_block("node");
+    }
+
+    /// `tak <name> { <field> = <expr> (newline|`,`)* }` — a fork-point node
+    /// (SPEC.md §10): a `.fdgn`-native way to mark "this node deliberately
+    /// forks" so the Designer panel can render it as a fork rather than a
+    /// plain action node. Its outgoing branches are ordinary `edge <name> ->
+    /// <target>` declarations — `tak` does not introduce new branch syntax
+    /// in `.fdgn`, it only distinguishes the fork *point* (mirrors `.fwrk`'s
+    /// `tak { been ... }`, which does need its own branch syntax since
+    /// `.fwrk` has no separate `edge` mechanism to lean on). Field shape is
+    /// identical to `node` (free-form `title`/`pos`/... fields; `action` is
+    /// meaningless on a pure fork point but not rejected — structure only).
+    fn parse_tak_fdgn(&mut self) {
+        self.bump_kw("tak"); // tak
+        if let Some(t) = self.peek() {
+            if t.kind == Kind::Ident {
+                self.bump_as(Role::Function);
+            } else {
+                self.err_here("expected fork name");
+            }
+        }
+        self.parse_field_block("tak");
+    }
+
+    /// Shared `{ <field> = <expr> (newline|`,`)* }` body for `node` and
+    /// `.fdgn`'s `tak` (SPEC.md §10) — same field grammar, different
+    /// keyword. `kind` is only used in error messages.
+    fn parse_field_block(&mut self, kind: &str) {
         self.bump_punct("{");
         loop {
             while self.is_punct(";") {
@@ -625,7 +656,7 @@ impl Parser {
             if self.peek().map(|t| t.line).unwrap_or(0) > start_line {
                 continue;
             }
-            self.err_here("expected newline or `,` between node fields");
+            self.err_here(&format!("expected newline or `,` between {kind} fields"));
         }
         self.bump_punct("}");
     }
@@ -699,6 +730,8 @@ impl Parser {
             self.parse_if();
         } else if self.is_kw("terwyl") {
             self.parse_while();
+        } else if self.is_kw("tak") {
+            self.parse_tak();
         } else if self.is_kw("gee") {
             self.parse_return();
         } else if let Some(t) = self.peek() {
@@ -788,6 +821,46 @@ impl Parser {
     fn parse_while(&mut self) {
         self.bump_kw("terwyl");
         self.parse_condition();
+        self.bump_punct("{");
+        self.parse_block();
+    }
+
+    /// `tak { been <name> { <block> } (been <name> { <block> })+ }` — named
+    /// parallel branches that run concurrently off one point (SPEC.md §5).
+    /// Requires at least one `been` branch; the language server does not
+    /// enforce branch-name uniqueness or join semantics (structure only,
+    /// matching the rest of this parser).
+    fn parse_tak(&mut self) {
+        self.bump_kw("tak");
+        self.bump_punct("{");
+        let mut branch_count = 0usize;
+        while self.is_kw("been") {
+            self.parse_been();
+            branch_count += 1;
+        }
+        if branch_count == 0 {
+            self.err_here("expected at least one `been` branch inside `tak`");
+        }
+        if self.is_punct("}") {
+            self.bump();
+        } else {
+            self.err_here("expected `}` to close `tak`");
+        }
+    }
+
+    /// `been <name> { <block> }` — one named branch of an enclosing `tak`.
+    /// The name is semantically tagged `Role::Function`, matching every
+    /// other named-and-referenceable declaration in this grammar (`flow`,
+    /// `node`, `edge` endpoints).
+    fn parse_been(&mut self) {
+        self.bump_kw("been");
+        if let Some(t) = self.peek() {
+            if t.kind == Kind::Ident {
+                self.bump_as(Role::Function);
+            } else {
+                self.err_here("expected branch name");
+            }
+        }
         self.bump_punct("{");
         self.parse_block();
     }

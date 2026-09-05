@@ -36,7 +36,7 @@ gbk      vannaf     soort      flow       step
 laat     as         anders     terwyl     gee
 lyn      nmr        vraag      objk       lys
 enige    leeg       elk        waar       onwaar    niks
-node     edge
+node     edge       tak        been
 ```
 
 > Design note: `flow` and `step` are intentionally English (stable engine API
@@ -45,7 +45,12 @@ node     edge
 > are therefore reserved everywhere. `node` and `edge` are also English —
 > they're `.fdgn`-only structural keywords (§10), kept consistent with `flow`/
 > `step` as stable engine-facing names rather than Afrikaans-rooted like the
-> general-purpose control keywords.
+> general-purpose control keywords. `tak` ("branch") stays English for the
+> same reason `node`/`edge` do — it names a structural, engine-facing concept
+> used the same way in both `.fwrk` and `.fdgn` (§5.1, §10). `been` ("leg") —
+> the label for one branch inside a `tak` — is Afrikaans-rooted like the
+> general control keywords, since it's `.fwrk`-only and has no `.fdgn`
+> counterpart.
 
 `true` / `false` are accepted as aliases for `waar` / `onwaar`.
 
@@ -180,6 +185,27 @@ gee                // return with no value
 ```
 `as` = if, `anders` = else, `terwyl` = while, `gee` = return.
 
+### Parallel fork (`tak`)
+```
+tak {
+    been FetchUser {
+        step http(method = "GET", url = "https://api.forge.dev/user")
+    }
+    been FetchOrders {
+        step http(method = "GET", url = "https://api.forge.dev/orders")
+    }
+}
+```
+`tak { been <naam> { <block> } (been <naam> { <block> })* }` — a named
+parallel fork. Each `been` branch is an independently named block; all
+branches declared inside one `tak` run concurrently off the same point (the
+`.fwrk` equivalent of the Task Chain panel's parallel columns). At least one
+`been` branch is required; the language server does not enforce branch-name
+uniqueness or define join/error semantics — that's runtime behavior (§9,
+Phase 4, still deferred), not something the parser validates. `been` is only
+valid directly inside a `tak` block; see §10 for `tak`'s different meaning in
+`.fdgn`.
+
 ---
 
 ## 6. Step actions
@@ -275,12 +301,13 @@ A `.fdgn` file is an ordered list of the following items, newline-separated:
    rather than being `.fdgn`-specific, so a `.fwrk` file that wants to import
    several functions from one path doesn't need one `gbk` line each.
 2. **Node** — `node <name> { ... }`
-3. **Edge** — `edge <name> -> <name>`
+3. **Fork point** — `tak <name> { ... }`
+4. **Edge** — `edge <name> -> <name>`
 
-Any `flow`/`step`/`soort`/`laat`/`as`/`terwyl`/`gee` item at the top level of
-a `.fdgn` file is a **structural error** — the language server reports it as
-an unexpected top-level item, the same way an unexpected `}` is reported in
-`.fwrk` today.
+Any `flow`/`step`/`soort`/`laat`/`as`/`terwyl`/`gee`/`been` item at the top
+level of a `.fdgn` file is a **structural error** — the language server
+reports it as an unexpected top-level item, the same way an unexpected `}` is
+reported in `.fwrk` today.
 
 ### Node
 
@@ -309,6 +336,35 @@ is structurally valid, just not runnable) but `title` and `action` are
 expected to be present in practice; the language server does not currently
 enforce this.
 
+### Fork point (`tak`)
+
+```
+tak fanOut {
+    title = "Fan Out"
+    pos = [80, 80]
+}
+
+node a {
+    title = "A"
+    action = http(method = "GET", url = "https://api.forge.dev/a")
+    pos = [300, 40]
+}
+
+edge fanOut -> a
+```
+
+`tak <name> { ... }` marks a fork *point* in the graph — same field grammar
+as `node` (`title`/`pos`, and `action` in principle though meaningless on a
+pure fork point; not rejected — structure only, same policy as `node`).
+Unlike `.fwrk`'s `tak` (§5), `.fdgn`'s `tak` introduces **no new branch
+syntax**: parallelism is already expressible in `.fdgn` as multiple `edge`
+declarations sharing one source, so a fork's branches are just ordinary
+`edge <name> -> <target>` lines out of the `tak` node. `tak` exists in
+`.fdgn` purely so the Designer panel can tell "this node deliberately forks"
+apart from "this node happens to have two outgoing edges" and render it
+differently (e.g. a diamond instead of a rectangle) — a distinction the
+language server does not itself enforce or validate.
+
 ### Edge
 
 ```
@@ -317,9 +373,9 @@ edge fetchData -> wait
 
 A standalone declaration connecting two node names by identifier. Order is
 source `->` target. The language server does not validate that either name
-resolves to a declared `node` in the file (no cross-reference checking yet,
-matching this document's opening note that scope resolution isn't
-enforced).
+resolves to a declared `node` (or `tak`) in the file (no cross-reference
+checking yet, matching this document's opening note that scope resolution
+isn't enforced).
 
 ### Example
 
@@ -346,7 +402,8 @@ edge fetchData -> wait
 | Element | Role |
 | --- | --- |
 | `node`, `edge`, `gbk`, `vannaf` | `keyword` |
-| Node declaration name, edge endpoint references | `function` (same role `flow` declarations and call sites use) |
+| `tak` | `control` (same role as `.fwrk`'s `as`/`anders`/`terwyl`/`tak` — one lexical token, one role, regardless of file kind) |
+| Node/fork declaration name, edge endpoint references | `function` (same role `flow` declarations and call sites use) |
 | `title`, `action`, `pos` | `property` |
 | Action call target (e.g. `http`) | `function` |
 | `->` | `operator` |
