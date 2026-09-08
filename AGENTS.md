@@ -22,14 +22,20 @@ printf 'Content-Length: 75\r\n\r\n{"jsonrpc":"2.0","id":1,"method":"initialize",
 
 ## Package anatomy
 
-- Three styles:
+- Four styles:
   - `Json/` — hand-rolled LSP over stdio (`Content-Length` framing). Reference implementation for
     framing, initialize handshake, and publishDiagnostics; copy its patterns for new servers.
   - `ForgeFlow/` — also hand-rolled Rust, but **parser-driven**: it implements the ForgeFlow DSL
     in Rust (lexer + recursive-descent parser + semantic tokens), not a proxy. Use it as the
     reference when a language needs real language intelligence rather than wrapping an existing
     engine. Its `usage.md` documents the architecture, extension points, and how the Forge app
-    consumes it (including the still-open semantic-token rendering step).
+    consumes it (including the still-open semantic-token rendering step). Source is split into
+    `src/server.rs` (framing/LSP), `src/grammar.rs` (lexer+parser), `src/semantic.rs` (tokens).
+  - `powershell/` — a hand-rolled proxy, but does NOT use the shared `common/` crate. It resolves
+    the **latest** PowerShellEditorServices GitHub release on each first run (queries
+    `releases/latest`; not a pinned tag), caches it under
+    `%LOCALAPPDATA%\forge\lsp-engines\powershell\`, then spawns `pwsh`/`powershell` with
+    `Start-EditorServices.ps1`. Needs `pwsh` on PATH.
   - Everything else — thin stdio proxies built on the shared `common/` crate (`forge-lsp-proxy`):
     describe the upstream engine in an `EngineSpec` (repo, pinned tag, per-platform asset map,
     PATH-first candidates) and call `forge_lsp_proxy::run()`. The shared runner probes `PATH`

@@ -94,6 +94,15 @@ gbk { Tools, Utils } vannaf "./shared.fwrk"
 Equivalent to one `gbk <name> vannaf "<path>"` per listed name. Both forms
 are valid in `.fwrk` and `.fdgn` (§10).
 
+Unlike the rest of this parser's "structure only" policy, imports **are**
+validated against the filesystem: the path is resolved relative to the
+current file's own directory, and each imported name must be declared as a
+`flow` or `soort` in the target file. An unresolvable path is an error on
+the path string; a name not found in an otherwise-readable target file is a
+warning on that name. If the target file itself has syntax errors, whatever
+top-level names lex cleanly are still used for the check — a broken import
+target doesn't cascade into every name from it being reported as missing.
+
 ### Type / interface declaration
 Alias form:
 ```
@@ -372,10 +381,13 @@ edge fetchData -> wait
 ```
 
 A standalone declaration connecting two node names by identifier. Order is
-source `->` target. The language server does not validate that either name
-resolves to a declared `node` (or `tak`) in the file (no cross-reference
-checking yet, matching this document's opening note that scope resolution
-isn't enforced).
+source `->` target. Both endpoints are validated against the file's
+declared `node`/`tak` names — an edge referencing an undeclared name is an
+error. This check runs after the whole file is parsed, so declaration
+order doesn't matter (an edge may reference a `node`/`tak` declared later
+in the file). This is the one piece of cross-reference validation this
+parser performs — everything else in `.fdgn`/`.fwrk` remains "structure
+only" per this document's opening note.
 
 ### Example
 
