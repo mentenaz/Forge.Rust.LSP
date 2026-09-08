@@ -1,0 +1,23 @@
+// Line comment. Block comments span lines too:
+/* like
+   this */
+
+// Number literals: at most one `.`, at most one `e`/`E` exponent, and a
+// sign only immediately after a consumed `e`/`E`. `10-5` with no spaces is
+// therefore three tokens (10, -, 5) — subtraction, not a "10-5" literal.
+flow reken() : nmr {
+    laat a = 10-5            // -> 10 - 5 == 5, not one token
+    laat b = 1e-5              // one number token: 0.00001
+    laat c = 3.14
+
+    // `true`/`false` are accepted aliases for `waar`/`onwaar`.
+    laat d: vraag = true
+    laat e: vraag = onwaar
+    laat leegWaarde = niks
+
+    gee a   // trailing comment
+}
+
+flow hoofd() : nmr {
+    gee reken()
+}

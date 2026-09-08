@@ -1,0 +1,26 @@
+// `tak { been <naam> { ... } ... }` is a named parallel fork (SPEC.md §5).
+// Every branch inside one `tak` runs concurrently off the same point. At
+// least one `been` is required — an empty `tak {}` is a parse error. Join
+// and error-propagation semantics across branches are runtime behavior
+// (SPEC.md's Phase 4), still deferred; the language server only checks the
+// branch-count structure shown here.
+
+flow haalGebruikersData() {
+    tak {
+        been HaalGebruiker {
+            step http(method = "GET", url = "https://api.forge.dev/user")
+        }
+        been HaalBestellings {
+            step http(method = "GET", url = "https://api.forge.dev/orders")
+        }
+        been HaalFakture {
+            step http(method = "GET", url = "https://api.forge.dev/invoices")
+        }
+    }
+
+    step log(level = "info", message = "alle tak-vertakkings uitgevoer")
+}
+
+flow hoofd() {
+    haalGebruikersData()
+}

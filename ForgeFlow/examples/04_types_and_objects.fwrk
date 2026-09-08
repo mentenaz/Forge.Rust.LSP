@@ -1,0 +1,42 @@
+// `soort` declares a type alias or an interface (field list). `?` marks a
+// field nullable. Generics: `lys<T>` (list) and `objk<K,V>` (map). `leeg`
+// is the explicit void type — omitting `: retType` on a flow means the
+// same thing (SPEC.md §1, §2, §3).
+//
+// Identifiers stay camelCase here on purpose: SPEC.md §1's identifier
+// regex (`[A-Za-z][A-Za-z0-9_]*`) documents `_` as legal, but the real
+// lexer's identifier-continuation check only accepts
+// `is_ascii_alphanumeric()` (src/grammar.rs) — an `_` anywhere in an
+// identifier is an "Unexpected character" lex error today.
+
+soort Id = lyn
+
+soort User = {
+    naam: lyn
+    ouderdom: nmr
+    epos: lyn?
+}
+
+soort Rooster = lys<User>
+soort Instellings = objk<lyn, enige>
+
+flow maakGebruiker(naam: lyn, ouderdom: nmr) : User {
+    gee User { naam = naam, ouderdom = ouderdom }
+}
+
+// A flow that returns nothing, written both ways: an explicit `leeg`
+// return type, and a bare `gee` with no value.
+flow logInstellings(data: Instellings) : leeg {
+    step log(level = "debug", message = "instellings gelog")
+    gee
+}
+
+flow hoofd() : lyn {
+    laat u = maakGebruiker(naam = "Jan", ouderdom = 30)
+
+    // An untyped object literal — no `Type` name before the `{`.
+    laat instellings: Instellings = { tema = "donker", onthou = waar }
+    logInstellings(data = instellings)
+
+    gee u.naam
+}

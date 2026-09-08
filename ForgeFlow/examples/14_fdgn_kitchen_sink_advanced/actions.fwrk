@@ -1,0 +1,16 @@
+// Declares every name dashboard.fdgn imports and calls as an action target.
+flow http(method: lyn, url: lyn) : enige {
+    gee niks
+}
+
+flow delay(ms: nmr) : leeg {
+    gee
+}
+
+flow transform(strategy: lyn) : enige {
+    gee niks
+}
+
+flow notify(channel: lyn, message: lyn) : leeg {
+    gee
+}

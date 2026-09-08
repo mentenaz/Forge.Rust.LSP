@@ -1,0 +1,45 @@
+gbk {Custom} vannaf "./nuwe"
+
+
+tak verspreiPunt {
+    title = "Fan Out"
+    pos = [80, 200]
+}
+
+node haalGebruiker {
+    title = "Fetch User"
+    action = http(method = "GET", url = "https://api.forge.dev/user")
+    pos = [320, 60]
+}
+
+node Probeer {
+    title = "Probeer"
+    action = Custom()
+    pos = [511, 80]
+}
+
+node haalBestellings {
+    title = "Fetch Orders"
+    action = http(method = "GET", url = "https://api.forge.dev/orders")
+    pos = [320, 200]
+}
+
+node haalFakture {
+    title = "Fetch Invoices"
+    action = http(method = "GET", url = "https://api.forge.dev/invoices")
+    pos = [320, 340]
+}
+
+node saamvoeg {
+    title = "Merge Results"
+    action = transform(strategy = "merge")
+    pos = [600, 200]
+}
+
+edge verspreiPunt -> haalGebruiker
+edge verspreiPunt -> haalBestellings
+edge verspreiPunt -> haalFakture
+edge haalGebruiker -> Probeer
+edge haalBestellings -> saamvoeg
+edge haalFakture -> saamvoeg
+edge Probeer -> saamvoeg

@@ -1,0 +1,14 @@
+soort Product = {
+    naam: lyn
+    prys: nmr
+    voorraad: nmr
+}
+
+// Optional/default parameter, boolean short-circuit in a condition, and an
+// early `gee` before the flow's final statement.
+flow berekenKorting(totaal: nmr, isLid: vraag = onwaar) : nmr {
+    as isLid && totaal > 100 {
+        gee totaal * 0.9
+    }
+    gee totaal
+}

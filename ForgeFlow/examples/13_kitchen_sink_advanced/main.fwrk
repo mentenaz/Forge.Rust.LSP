@@ -1,0 +1,93 @@
+// The "extreme" .fwrk example: every construct in SPEC.md in one small
+// order-processing flow. Imports, interface + alias + generic types,
+// nullable fields, default parameters, nested control flow, both `.elk`
+// forms, a parallel `tak`/`been` fork, and `step` actions.
+
+gbk { Product, berekenKorting } vannaf "./pricing.fwrk"
+
+soort Bestelling = {
+    id: nmr
+    klant: lyn
+    items: lys<Product>
+    isLid: vraag?
+}
+
+soort Meta = objk<lyn, enige>
+
+flow verwerkItem(item: Product) : nmr {
+    as item.voorraad <= 0 {
+        gee 0
+    }
+    gee item.prys
+}
+
+flow verwerkBestelling(bestelling: Bestelling) : nmr {
+    laat subtotaal: nmr = 0
+
+    // Loop form: accumulate a running total.
+    bestelling.items.elk((item)) {
+        laat prys = verwerkItem(item = item)
+        subtotaal = subtotaal + prys
+    }
+
+    // `isLid` is nullable (`vraag?`) — `niks` is the explicit "no value".
+    laat lidStatus: vraag = onwaar
+    as bestelling.isLid != niks {
+        lidStatus = bestelling.isLid
+    }
+
+    gee berekenKorting(totaal = subtotaal, isLid = lidStatus)
+}
+
+flow hoofd() : nmr {
+    laat voorraad = [
+        Product { naam = "Klawerbord", prys = 45, voorraad = 12 },
+        Product { naam = "Muis", prys = 15, voorraad = 0 },
+        Product { naam = "Monitor", prys = 220, voorraad = 4 }
+    ]
+
+    // Map form: a derived list, never assigned back to `voorraad`.
+    laat pryse = voorraad.elk((p)) => p.prys
+
+    laat bestelling = Bestelling {
+        id = 1001,
+        klant = "Alta",
+        items = voorraad,
+        isLid = waar
+    }
+
+    // `terwyl` retrying a computation until it produces a non-zero result
+    // (or three attempts pass) — a deliberately contrived way to exercise
+    // `terwyl` here, not a pattern to copy verbatim.
+    laat totaal: nmr = 0
+    laat pogings: nmr = 0
+    terwyl pogings < 3 {
+        as totaal == 0 {
+            totaal = verwerkBestelling(bestelling = bestelling)
+        }
+        pogings = pogings + 1
+    }
+
+    // Three independent branches, run concurrently off the same point.
+    tak {
+        been StuurFaktuur {
+            step sendEmail(
+                to = bestelling.klant,
+                subject = "Faktuur",
+                body = "Faktuur uitgereik"
+            )
+        }
+        been WerkVoorraadOp {
+            step http(
+                method = "POST",
+                url = "https://api.forge.dev/v1/inventory/adjust",
+                body = "{}"
+            )
+        }
+        been LoggeVerwerking {
+            step log(level = "info", message = "bestelling verwerk")
+        }
+    }
+
+    gee totaal
+}

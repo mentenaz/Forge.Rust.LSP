@@ -1,0 +1,36 @@
+// `as`/`anders` = if/else, `terwyl` = while, `gee` = return (SPEC.md §5).
+// Every call — flow invocation included, not just `step` — uses the same
+// `name = value` argument convention; there is no positional-argument form
+// anywhere in the grammar.
+flow classify(n: nmr) : lyn {
+    as n > 0 {
+        gee "positive"
+    } anders {
+        as n < 0 {
+            gee "negative"
+        } anders {
+            gee "zero"
+        }
+    }
+}
+
+flow telOp(limiet: nmr) : nmr {
+    laat totaal: nmr = 0
+    terwyl totaal < limiet {
+        totaal = totaal + 1
+    }
+    gee totaal
+}
+
+// Early return before the flow's final statement.
+flow eersteGeldige(n: nmr) : nmr {
+    as n <= 0 {
+        gee 0
+    }
+    gee n
+}
+
+flow hoofd() : lyn {
+    laat n = telOp(limiet = 5)
+    gee classify(n = n - 5)
+}

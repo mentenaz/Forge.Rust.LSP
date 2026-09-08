@@ -1,0 +1,19 @@
+// `step` invokes an engine action. It is a statement, not an expression —
+// unlike a flow call, its result cannot be assigned with `laat` (SPEC.md
+// §6). Arguments are always `name = value` pairs.
+
+flow verstuurVerslag() {
+    step http(method = "GET", url = "https://api.forge.dev/v1/status")
+
+    step sendEmail(
+        to = "team@forge.dev",
+        subject = "Daaglikse verslag",
+        body = "Alle stelsels operasioneel."
+    )
+
+    step log(level = "info", message = "Verslag gestuur")
+}
+
+flow hoofd() {
+    verstuurVerslag()
+}

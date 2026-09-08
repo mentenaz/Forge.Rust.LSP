@@ -1,0 +1,17 @@
+// `.fdgn` is a deliberately narrower grammar than `.fwrk` (SPEC.md §10): a
+// flat graph of `node`/`edge` declarations, no flow/step/control-flow. This
+// is the format the Forge Designer panel reads and writes.
+
+node stuurVersoek {
+    title = "Send Request"
+    action = http(method = "GET", url = "https://api.forge.dev/v1/ping")
+    pos = [80, 80]
+}
+
+node wagVirAntwoord {
+    title = "Wait For Response"
+    action = delay(ms = 250)
+    pos = [320, 80]
+}
+
+edge stuurVersoek -> wagVirAntwoord

@@ -1,0 +1,74 @@
+// The "extreme" .fdgn example: a `tak` fan-out into three independent
+// per-source pipelines, each normalized before a final fan-in merge and a
+// notify step. Every node/edge/tak/import construct SPEC.md §10 defines,
+// in one graph.
+
+gbk { http, delay, transform, notify } vannaf "./actions.fwrk"
+
+tak versamelPunt {
+    title = "Collect Sources"
+    pos = [40, 260]
+}
+
+node haalWeer {
+    title = "Fetch Weather"
+    action = http(method = "GET", url = "https://api.forge.dev/weather")
+    pos = [320, 60]
+}
+
+node haalVoorraad {
+    title = "Fetch Inventory"
+    action = http(method = "GET", url = "https://api.forge.dev/inventory")
+    pos = [320, 260]
+}
+
+node haalBestellings {
+    title = "Fetch Orders"
+    action = http(method = "GET", url = "https://api.forge.dev/orders")
+    pos = [320, 460]
+}
+
+// Each branch gets its own short pipeline before the merge.
+node wagWeer {
+    title = "Debounce Weather"
+    action = delay(ms = 100)
+    pos = [600, 60]
+}
+
+node transformeerVoorraad {
+    title = "Normalize Inventory"
+    action = transform(strategy = "normalize")
+    pos = [600, 260]
+}
+
+node transformeerBestellings {
+    title = "Normalize Orders"
+    action = transform(strategy = "normalize")
+    pos = [600, 460]
+}
+
+node saamvoeg {
+    title = "Merge All"
+    action = transform(strategy = "merge")
+    pos = [880, 260]
+}
+
+node stuurKennisgewing {
+    title = "Notify Dashboard"
+    action = notify(channel = "ops", message = "dashboard refreshed")
+    pos = [1140, 260]
+}
+
+edge versamelPunt -> haalWeer
+edge versamelPunt -> haalVoorraad
+edge versamelPunt -> haalBestellings
+
+edge haalWeer -> wagWeer
+edge haalVoorraad -> transformeerVoorraad
+edge haalBestellings -> transformeerBestellings
+
+edge wagWeer -> saamvoeg
+edge transformeerVoorraad -> saamvoeg
+edge transformeerBestellings -> saamvoeg
+
+edge saamvoeg -> stuurKennisgewing

@@ -1,0 +1,10 @@
+// Imported by main.fwrk. ForgeFlow only supports named imports (no
+// glob/wildcard, SPEC.md §2) — each flow main.fwrk wants gets its own name
+// in the `gbk { ... }` list rather than a namespaced module object.
+flow optel(a: nmr, b: nmr) : nmr {
+    gee a + b
+}
+
+flow vermenigvuldig(a: nmr, b: nmr) : nmr {
+    gee a * b
+}

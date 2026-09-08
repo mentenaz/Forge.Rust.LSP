@@ -509,3 +509,149 @@ pub fn hover_at(toks: &[Tok], sems: &[SemToken], line: usize, character: usize, 
     None
 }
 
+/// One name's declaration site, for `textDocument/definition`.
+#[derive(Clone, Copy)]
+pub struct Decl {
+    pub line: usize,
+    pub col: usize,
+    pub len: usize,
+}
+
+/// Collects every top-level `flow`/`soort` declaration, every `.fdgn`
+/// `node` declaration, and every `.fdgn` `tak <name> { ... }` fork-point
+/// declaration in the whole file, keyed by name, with the position of the
+/// declared identifier itself (not the `flow`/`soort`/`node`/`tak` keyword).
+/// (`tak`'s other, nameless form — the `.fwrk` parallel-fork block `tak {
+/// been ... }` — is never mistaken for a declaration here: that `tak` is
+/// immediately followed by `{`, not an identifier, so the `Kind::Ident`
+/// check below simply doesn't match it.)
+///
+/// Unlike `collect_scope`, this is *not* cursor-scoped: these names are
+/// global within a file (a flow can call another flow declared later in the
+/// same file, an edge can reference a fork point declared later in the
+/// file), so every reference should resolve regardless of where the cursor
+/// is. Local variables/parameters (`laat`, flow params, `.elk` loop vars)
+/// are deliberately not tracked here — they're scoped to one flow body, and
+/// resolving them correctly needs the same scope-aware walk `collect_scope`
+/// already does for completion, not a flat file-wide map; a later pass can
+/// fold this into that walk if variable-level definition support is wanted.
+pub fn collect_declarations(toks: &[Tok]) -> HashMap<String, Decl> {
+    let mut decls = HashMap::new();
+    let mut i = 0;
+    while i < toks.len() {
+        if matches!(toks[i].text.as_str(), "flow" | "soort" | "node" | "tak") {
+            if let Some(n) = toks.get(i + 1) {
+                if n.kind == Kind::Ident {
+                    // `or_insert`, not overwrite: if a name is declared more
+                    // than once (a real error the diagnostics pass should
+                    // already be flagging separately), keep resolving to the
+                    // first one rather than flip-flopping as more of the
+                    // file is scanned.
+                    decls.entry(n.text.clone()).or_insert(Decl { line: n.line, col: n.col, len: n.len });
+                }
+            }
+        }
+        i += 1;
+    }
+    decls
+}
+
+/// One `gbk <name> vannaf "<path>"` import — or one name out of the list
+/// form, `gbk { <name>, <name> } vannaf "<path>"`, which produces one
+/// `Import` per listed name, all sharing that path (but each keeping its
+/// own name position — every listed name gets its own diagnostic if it
+/// turns out not to be declared in the target file). `path` is the string
+/// literal's content exactly as written (relative, e.g. `"./actions.fwrk"`)
+/// — resolving it against the importing file's own location is the
+/// caller's job (it needs real filesystem access, which this module
+/// deliberately doesn't have — see `grammar`'s module doc: semantic
+/// analysis works from the token stream only). `name_pos`/`path_pos` are
+/// each `(line, col, len)`, for pointing a diagnostic at exactly the name
+/// or the path string when either doesn't resolve.
+pub struct Import {
+    pub name: String,
+    pub name_pos: (usize, usize, usize),
+    pub path: String,
+    pub path_pos: (usize, usize, usize),
+}
+
+/// Collects every `gbk` import in the file, expanding the list form into
+/// one `Import` per name. Used both to resolve a name `definition_at`
+/// couldn't find locally (see that function's `Unresolved` case) and to
+/// check import resolution itself for diagnostics (see `server.rs`'s
+/// `check_imports`).
+pub fn collect_imports(toks: &[Tok]) -> Vec<Import> {
+    let mut imports = Vec::new();
+    let mut i = 0;
+    while i < toks.len() {
+        if toks[i].text == "gbk" {
+            let mut names: Vec<(String, (usize, usize, usize))> = Vec::new();
+            let mut j = i + 1;
+            if toks.get(j).map(|t| t.text == "{").unwrap_or(false) {
+                j += 1;
+                while j < toks.len() && toks[j].text != "}" {
+                    if toks[j].kind == Kind::Ident {
+                        let t = &toks[j];
+                        names.push((t.text.clone(), (t.line, t.col, t.len)));
+                    }
+                    j += 1;
+                }
+                j += 1; // past `}`
+            } else if toks.get(j).map(|t| t.kind == Kind::Ident).unwrap_or(false) {
+                let t = &toks[j];
+                names.push((t.text.clone(), (t.line, t.col, t.len)));
+                j += 1;
+            }
+            if toks.get(j).map(|t| t.text == "vannaf").unwrap_or(false) {
+                if let Some(path_tok) = toks.get(j + 1) {
+                    if path_tok.kind == Kind::Str {
+                        let path_pos = (path_tok.line, path_tok.col, path_tok.len);
+                        for (name, name_pos) in names {
+                            imports.push(Import { name, name_pos, path: path_tok.text.clone(), path_pos });
+                        }
+                    }
+                }
+            }
+        }
+        i += 1;
+    }
+    imports
+}
+
+/// Result of resolving the identifier under the cursor for
+/// `textDocument/definition`.
+pub enum DefinitionResult {
+    /// Resolved to a declaration in this same file.
+    Local(Decl),
+    /// The cursor is on an identifier, but it's not declared in this file —
+    /// the caller should check `collect_imports` for a `gbk` import of this
+    /// name and, if there is one, look for the declaration in *that* file
+    /// instead (needs filesystem access this module doesn't have, hence
+    /// this being a distinct case rather than this function doing it).
+    Unresolved(String),
+    /// The cursor isn't on an identifier at all (whitespace, a keyword, a
+    /// literal, punctuation) — nothing to resolve.
+    None,
+}
+
+/// `textDocument/definition`: resolves the identifier under the cursor to
+/// where it was declared — a flow call to its `flow` declaration, a type
+/// name to its `soort` declaration, a `.fdgn` `edge`/`tak` endpoint to its
+/// `node` declaration. See `DefinitionResult` for the three outcomes;
+/// notably, clicking the declaration site itself resolves to `None`, not
+/// `Local` — there's nothing useful to jump to from there.
+pub fn definition_at(toks: &[Tok], line: usize, character: usize) -> DefinitionResult {
+    let Some(ident) = toks
+        .iter()
+        .find(|t| t.kind == Kind::Ident && t.line == line && character >= t.col && character <= t.col + t.len)
+    else {
+        return DefinitionResult::None;
+    };
+    let decls = collect_declarations(toks);
+    match decls.get(&ident.text) {
+        Some(decl) if decl.line == ident.line && decl.col == ident.col => DefinitionResult::None,
+        Some(decl) => DefinitionResult::Local(*decl),
+        None => DefinitionResult::Unresolved(ident.text.clone()),
+    }
+}
+

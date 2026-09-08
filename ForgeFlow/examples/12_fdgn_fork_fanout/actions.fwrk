@@ -1,0 +1,16 @@
+// Declares the names imported by flow.fdgn in this folder. `.fdgn` action
+// call targets (e.g. `http(...)`) aren't cross-checked against anything by
+// the language server — but the `gbk` import line itself references these
+// by name, so they get real declarations here for consistency with
+// 09_imports/.
+flow http(method: lyn, url: lyn) : enige {
+    gee niks
+}
+
+flow delay(ms: nmr) : leeg {
+    gee
+}
+
+flow transform(strategy: lyn) : enige {
+    gee niks
+}

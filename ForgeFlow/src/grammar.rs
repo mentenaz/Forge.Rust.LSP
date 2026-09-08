@@ -265,6 +265,17 @@ pub struct Diag {
     message: String,
 }
 
+impl Diag {
+    /// Builds a diagnostic from outside this module — e.g. `server.rs`'s
+    /// `gbk` import-resolution check, which needs filesystem access this
+    /// module deliberately doesn't have (see this file's own module doc).
+    /// `severity` follows the LSP `DiagnosticSeverity` scale: `1` = error,
+    /// `2` = warning, `3` = information, `4` = hint.
+    pub fn new(line: usize, col: usize, len: usize, severity: u64, message: String) -> Self {
+        Self { line, col, len: len.max(1), severity, message }
+    }
+}
+
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Role {
     Keyword,

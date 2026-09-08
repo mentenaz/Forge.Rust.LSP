@@ -1,0 +1,7 @@
+flow groet(naam: lyn) : lyn {
+    gee "Hallo, " + naam + "!"
+}
+
+flow vaarwel(naam: lyn) : lyn {
+    gee "Tot siens, " + naam + "."
+}

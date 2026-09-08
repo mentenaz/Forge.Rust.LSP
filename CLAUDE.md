@@ -1,0 +1,94 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+See `AGENTS.md` for the full operating guide (commands, package anatomy, engine-resolution
+chains, release flow, and easy-to-miss rules) — it applies equally here and is kept in sync with
+this repo's actual behavior. Highlights below.
+
+## What this repo is
+
+A monorepo of Forge language-server extension packages — the Forge equivalent of Zed's
+`extensions/` directory. Each top-level folder containing a `forge-extension.toml` is one
+self-contained package: metadata + a Rust crate producing a single LSP binary. This repo is
+public; Forge installs download release binaries directly via the generated `forge-registry.json`.
+
+## Commands
+
+```sh
+cargo build --release                        # build every server binary into target/release/
+cargo run --release -p forge-registry-gen    # regenerate forge-registry.json (must run from repo root)
+printf 'Content-Length: 75\r\n\r\n{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"capabilities":{}}}' | target/release/forge-lsp-json
+```
+
+- `-p` takes the **crate name**, not the folder name (`Json/` → `forge-lsp-json`; tool → `forge-registry-gen`).
+- The smoke test above expects a `Content-Length`-framed JSON response on stdout. Piping bare
+  JSON without the header makes the server exit silently — the header is mandatory.
+- There is no test suite beyond `cargo test -p forge-lsp-proxy` (extraction logic).
+  Verification = `cargo build --release` + the stdio smoke test above.
+- CI builds `cargo build --release --workspace --exclude forge-registry-gen`.
+
+## Package anatomy
+
+Four styles of package:
+
+- **`Json/`** — hand-rolled LSP over stdio (`Content-Length` framing). Reference implementation
+  for framing, the initialize handshake, and publishDiagnostics; copy its patterns for new servers.
+- **`ForgeFlow/`** — also hand-rolled Rust, but **parser-driven**: it implements the ForgeFlow DSL
+  in Rust (lexer + recursive-descent parser + semantic tokens), not a proxy. Use it as the
+  reference when a language needs real language intelligence rather than wrapping an existing
+  engine. Its `usage.md` documents the architecture, extension points, and how the Forge app
+  consumes it. Source: `src/server.rs` (framing/LSP), `src/grammar.rs` (lexer+parser),
+  `src/semantic.rs` (tokens).
+- **`powershell/`** — a hand-rolled proxy that does NOT use the shared `common/` crate. It resolves
+  the **latest** PowerShellEditorServices GitHub release on each first run (not a pinned tag),
+  caches it under `%LOCALAPPDATA%\forge\lsp-engines\powershell\`, then spawns `pwsh`/`powershell`
+  with `Start-EditorServices.ps1`. Needs `pwsh` on PATH.
+- **Everything else** — thin stdio proxies built on the shared `common/` crate (`forge-lsp-proxy`):
+  describe the upstream engine in an `EngineSpec` (repo, pinned tag, per-platform asset map,
+  PATH-first candidates) and call `forge_lsp_proxy::run()`. The shared runner probes `PATH` first,
+  then downloads the pinned release into `%LOCALAPPDATA%\forge\lsp-engines\<lang>\<tag>\`
+  (Unix: `~/.local/share/...`), auto-extracts zip/tar.gz/gz/raw (tar.xz via system `tar`, Unix
+  only), spawns, and pumps bytes. Wrapper errors go to stderr and exit code 1 — stdout is
+  reserved for LSP frames.
+
+### Engine resolution per language
+
+- C#: roslyn dotnet tool (auto-installs) → VS Code C# ext → omnisharp → csharp-ls.
+- Python: basedpyright/pyright/pylsp/jedi on PATH → npm install of basedpyright.
+- Rust/Cpp/Lua/Toml/Markdown/Zig/TypeScript/Sql: engine on PATH wins → pinned GitHub release
+  download (`TAG` const + asset names must be bumped together; see each package's `main.rs`).
+  TypeScript wraps native TS7 (typescript-go) with NO PATH probe; its tag contains a slash
+  (`typescript/v7.0.2`) — cache dirs flatten `/`→`_`. Sql ships x86_64-only upstream.
+- Terraform: PATH-first → pinned download from releases.hashicorp.com via the `asset_url`
+  direct-URL resolver (bypasses the GitHub API); needs `serve` arg.
+- Bash/Yaml/Html/Css: server on PATH wins → pinned npm package installed with
+  `npm install --prefix <engine cache>/npm`, spawned as `node <entry.js>` (needs node+npm on
+  PATH; entry paths are per-package consts).
+- Go/Dart: PATH-only, no download fallback — missing-engine cases print install instructions,
+  exit 1.
+
+- `forge-extension.toml` accepts an optional `platforms = [...]` under `[language_server]`;
+  omit it only if the upstream engine ships all six platforms.
+- Release flow: push tag `v*` → `.github/workflows/build-release.yml` builds all six registry
+  platforms (windows-x86_64/aarch64, macos-aarch64/x86_64, linux-x86_64/aarch64), zips each binary
+  as `forge-lsp-<lang>-<platform>.zip`, regenerates the registry, attaches everything to the release.
+- Consumer: the GPUI Forge app (`E:\Forge_GPUI`, `src/backend/lsp/`) fetches `forge-registry.json`
+  from this repo's **latest release** (24h local cache), then downloads `<binary>-<platform>.zip`
+  on demand into `%LOCALAPPDATA%\forge\lsp\<repo>__<version>\`. The Tauri Forge app is legacy and
+  does not use these extensions.
+
+## Rules that are easy to miss
+
+- Never hand-edit `forge-registry.json` — it is generated by `tools/registry-gen`, which scans
+  every direct child dir containing `forge-extension.toml`. Regenerate after adding/changing
+  packages (also regenerated during each tagged release build).
+- `version` in `forge-extension.toml` is the download-cache key on user machines: bump it every
+  time a package's binary behavior changes, or existing Forge installs keep running the stale
+  cached binary.
+- Adding a language requires BOTH a new folder AND adding its crate to `members` in root
+  `Cargo.toml`. registry-gen finds folders automatically; cargo does not.
+- Keep `version` in sync between `Cargo.toml` and `forge-extension.toml` per package — the
+  registry reads the latter, so bumping only Cargo leaves releases mis-versioned.
+- Crate/binary name must match `binary` in `forge-extension.toml` (CI globs manifests and copies
+  `target/<target-triple>/release/<binary>`). Convention: `forge-lsp-<lang>`.

@@ -1,0 +1,21 @@
+// `laat` declares a variable (optionally typed); a bare `name = expr`
+// reassigns an existing one. Expression precedence, low to high: logical
+// (&&, ||) -> comparison -> additive -> multiplicative -> unary -> postfix
+// (SPEC.md §7).
+flow reken() : nmr {
+    laat a = 10
+    laat b: nmr = 3
+    laat c = (a + b) * 2 - 1        // 25
+
+    a = a + 1                       // reassignment, no `laat`
+
+    laat groter: vraag = c > 20 && !onwaar
+    as groter {
+        gee c
+    }
+    gee 0
+}
+
+flow hoofd() : nmr {
+    gee reken()
+}

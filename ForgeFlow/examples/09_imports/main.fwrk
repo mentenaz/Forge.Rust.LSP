@@ -1,0 +1,13 @@
+// Single-name import (SPEC.md §2):
+gbk optel vannaf "./math.fwrk"
+
+// Brace-delimited list import — one `gbk` line pulling several names from
+// the same path, equivalent to one `gbk <name> vannaf "<path>"` per name:
+gbk { vermenigvuldig } vannaf "./math.fwrk"
+gbk { groet, vaarwel } vannaf "./greetings.fwrk"
+
+flow hoofd() : lyn {
+    laat som = optel(a = 2, b = 3)
+    laat produk = vermenigvuldig(a = som, b = 4)
+    gee groet(naam = "Wereld") + " Die antwoord is " + produk + ". " + vaarwel(naam = "Wereld")
+}

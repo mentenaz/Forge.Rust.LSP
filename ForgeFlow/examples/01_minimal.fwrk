@@ -1,0 +1,6 @@
+// The smallest possible ForgeFlow file: one flow, no parameters, one
+// statement. The first `flow` declared in a file is the entry point
+// (SPEC.md §2).
+flow hoofd() {
+    gee "hello, forgeflow"
+}

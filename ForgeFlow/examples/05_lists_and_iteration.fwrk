@@ -1,0 +1,23 @@
+// `.elk` has two forms (SPEC.md §7): the map form `.elk((v)) => expr`
+// produces a new list; the loop form `.elk((v)) { ... }` runs a block per
+// element, with `v` scoped to that iteration.
+
+flow verdubbel(getalle: lys<nmr>) : lys<nmr> {
+    gee getalle.elk((x)) => x * 2
+}
+
+flow somPositief(getalle: lys<nmr>) : nmr {
+    laat totaal: nmr = 0
+    getalle.elk((n)) {
+        as n > 0 {
+            totaal = totaal + n
+        }
+    }
+    gee totaal
+}
+
+flow hoofd() : nmr {
+    laat getalle = [1, -2, 3, -4, 5]
+    laat verdubbeld = verdubbel(getalle = getalle)
+    gee somPositief(getalle = verdubbeld)
+}
